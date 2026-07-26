@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 //Routes
-import categoryRouter from "./routes/categoy.route.js";
+import categoryRouter from "./routes/category.route.js";
 import userRouter from "./routes/user.route.js";
 
 const app = express();
