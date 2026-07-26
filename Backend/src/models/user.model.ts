@@ -5,8 +5,9 @@ import {
     type CreationOptional,
     Model,
 } from "sequelize";
-
 import sequelize from "../config/database.js";
+import bcrypt from "bcrypt";
+
 
 class User extends Model<
     InferAttributes<User>,
@@ -25,6 +26,7 @@ class User extends Model<
     declare readonly createdAt: CreationOptional<Date>;
 
     declare readonly updatedAt: CreationOptional<Date>;
+
 }
 
 User.init(
@@ -53,6 +55,15 @@ User.init(
         password: {
             type: DataTypes.STRING(255),
             allowNull: false,
+            validate: {
+                notEmpty: {
+                    msg: "Password cannot be empty",
+                },
+                len: {
+                    args: [8, 100],
+                    msg: "Password must be at least 8 characters long",
+                },
+            },
         },
 
         phone: {
@@ -72,6 +83,16 @@ User.init(
         sequelize,
         tableName: "users",
         timestamps: true,
+        defaultScope: {
+            attributes: { exclude: ["password"] },
+        },
+        hooks: {
+            beforeCreate: async (user) => {
+                if (user.password) {
+                    user.password = await bcrypt.hash(user.password, 5);
+                }
+            },
+        },
     }
 );
 
