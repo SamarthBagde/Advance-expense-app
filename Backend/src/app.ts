@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 
+//Routes
+import categoryRouter from "./routes/categoy.route.js";
+
 const app = express();
 
 /**
@@ -55,9 +58,7 @@ app.get("/health", (_, res) => {
 /**
  * API Routes
  */
-// app.use("/api/v1/auth", authRoutes);
-// app.use("/api/v1/users", userRoutes);
-// app.use("/api/v1/expenses", expenseRoutes);
+app.use("/api/category", categoryRouter);
 
 /**
  * 404 Handler
