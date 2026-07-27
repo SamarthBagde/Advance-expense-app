@@ -1,6 +1,6 @@
 import Expense from "../models/expense.model.js";
 import { AppError } from "../utils/appError.js";
-import type { ICreateExpenseDTO } from "../types/expense.type.js";
+import type { ICreateExpenseDTO, IUpdateExpenseDTO } from "../types/expense.type.js";
 
 export const createExpense = async (data: ICreateExpenseDTO): Promise<Expense> => {
     const { userId, categoryId, title, amount, paymentMethod } = data;
@@ -44,10 +44,10 @@ export const getExpenseById = async (expenseId: number): Promise<Expense> => {
     return expense;
 }
 
-export const deleteExpense = async (expenseId: number): Promise<Expense> => {
+export const deleteExpense = async (expenseId: number, userId: number): Promise<Expense> => {
 
     if (!expenseId) {
-        throw new AppError("Please provide expense id", 404);
+        throw new AppError("Please provide expense id", 400);
     }
 
     const expense = await Expense.findByPk(expenseId);
@@ -56,22 +56,29 @@ export const deleteExpense = async (expenseId: number): Promise<Expense> => {
         throw new AppError("Expense not found", 404);
     }
 
+    if (expense.userId !== userId) {
+        throw new AppError("You do not have permission to delete this expense", 403);
+    }
+
     await expense.destroy();
     return expense;
 }
 
-// export const updateExpense = async (expenseId: number, data: ICreateExpenseDTO): Promise<Expense> => {
+export const updateExpense = async (expenseId: number, userId: number, data: IUpdateExpenseDTO): Promise<Expense> => {
+    if (!expenseId) {
+        throw new AppError("Please provide expense id", 400);
+    }
 
-//     if (!expenseId) {
-//         throw new AppError("Please provide expense id", 404);
-//     }
+    const expense = await Expense.findByPk(expenseId);
 
-//     const expense = await Expense.findByPk(expenseId);
+    if (!expense) {
+        throw new AppError("Expense not found", 404);
+    }
 
-//     if (!expense) {
-//         throw new AppError("Expense not found", 404);
-//     }
+    if (expense.userId !== userId) {
+        throw new AppError("You do not have permission to update this expense", 403);
+    }
 
-//     await expense.update(data);
-//     return expense;
-// }
+    await expense.update(data as any);
+    return expense;
+};

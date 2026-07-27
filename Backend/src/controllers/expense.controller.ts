@@ -63,12 +63,17 @@ export const getExpenseById = asyncHandler(async (req: Request, res: Response, n
 export const deleteExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
     const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+        return next(new AppError("Unauthorized", 401));
+    }
 
     if (!id) {
         throw new AppError("Please provide expense id", 400);
     }
 
-    const expense = await expenseService.deleteExpense(Number(id));
+    const expense = await expenseService.deleteExpense(Number(id), userId);
 
     if (!expense) {
         return next(new AppError("Failed to delete expense", 500));
@@ -78,5 +83,22 @@ export const deleteExpense = asyncHandler(async (req: Request, res: Response, ne
 })
 
 export const updateExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const userId = req.user?.id;
 
-})
+    if (!userId) {
+        return next(new AppError("Unauthorized", 401));
+    }
+
+    if (!id) {
+        throw new AppError("Please provide expense id", 400);
+    }
+
+    const expense = await expenseService.updateExpense(Number(id), userId, req.body);
+
+    if (!expense) {
+        return next(new AppError("Failed to update expense", 500));
+    }
+
+    return sendResponse(res, 200, "Expense updated successfully", expense);
+});
