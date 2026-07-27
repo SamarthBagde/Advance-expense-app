@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { addExpense, getAllExpense, getExpenseById, deleteExpense } from "../controllers/expense.controller.js";
-import { protect } from "../controllers/aurh.controller.js";
+import { protect } from "../controllers/auth.controller.js";
 
 const expenseRouter = Router();
 

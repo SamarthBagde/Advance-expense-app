@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getCategories, getCategoryById } from "../controllers/category.controller.js";
-import { protect } from "../controllers/aurh.controller.js";
+import { protect } from "../controllers/auth.controller.js";
 
 const categoryRouter = Router();
 
