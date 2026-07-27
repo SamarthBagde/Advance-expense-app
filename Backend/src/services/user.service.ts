@@ -49,3 +49,12 @@ export const getUserByUserUserName = async (
     throw err;
   }
 };
+
+export const getAllUsers = async (): Promise<IUserResponseDTO[] | null> => {
+  try {
+    const users = await User.findAll();
+    return users as IUserResponseDTO[];
+  } catch (err) {
+    throw err;
+  }
+};
