@@ -10,6 +10,7 @@ backend/uploads/
 backend/coverage/
 backend/.eslintcache
 backend/*.log
+Backend/package-lock.json
 
 # ===========================
 # React Native

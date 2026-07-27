@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-
+import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 //Routes
@@ -42,6 +42,8 @@ app.use(
  */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(cookieParser());
 
 // /**
 //  * Compression

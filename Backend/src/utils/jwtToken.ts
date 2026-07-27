@@ -19,7 +19,7 @@ export const sendToken = (user: IUserResponseDTO, statusCode: number, res: Respo
         httpOnly: true,
     };
 
-    res.status(statusCode).cookie("token", token, options).json({
+    res.status(statusCode).cookie("jwtToken", token, options).json({
         status: "Success",
         token,
         data: {
