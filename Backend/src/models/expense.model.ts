@@ -22,9 +22,7 @@ class Expense extends Model<
 
     declare amount: number;
 
-    declare description: CreationOptional<string | null>;
-
-    declare expenseDate: Date;
+    declare expenseDate: CreationOptional<Date>;
 
     declare paymentMethod:
         | "CASH"
@@ -70,14 +68,10 @@ Expense.init(
             allowNull: false,
         },
 
-        description: {
-            type: DataTypes.TEXT,
-            allowNull: true,
-        },
-
         expenseDate: {
             type: DataTypes.DATEONLY,
             allowNull: false,
+            defaultValue: DataTypes.NOW,
         },
 
         paymentMethod: {

@@ -1,0 +1,98 @@
+import { AppError } from "../utils/appError.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
+import type { Response, Request, NextFunction } from "express";
+import * as expenseService from "../services/expense.service.js";
+
+export const addExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const { categoryId, title, amount, expenseDate, paymentMethod, note } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+        return next(new AppError("Unauthorized", 401));
+    }
+
+    if (!categoryId || !title || !amount || !paymentMethod) {
+        throw new AppError("Missing required fields", 400);
+    }
+
+    const expense = await expenseService.createExpense({ userId, categoryId, title, amount, expenseDate, paymentMethod, note });
+
+    if (!expense) {
+        return next(new AppError("Failed to create expense", 500));
+    }
+
+    res.status(201).json({
+        success: true,
+        message: "Expense created successfully",
+        data: expense
+    });
+
+})
+
+export const getAllExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+        return next(new AppError("Unauthorized", 401));
+    }
+
+    const expenses = await expenseService.getAllExpense(Number(userId));
+
+    if (!expenses) {
+        return next(new AppError("Failed to fetch expenses", 500));
+    }
+
+    res.status(200).json({
+        success: true,
+        data: expenses
+    });
+
+})
+
+export const getExpenseById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const { id } = req.params;
+
+    if (!id) {
+        throw new AppError("Please provide expense id", 400);
+    }
+
+    const expense = await expenseService.getExpenseById(Number(id));
+
+    if (!expense) {
+        return next(new AppError("Failed to fetch expense", 500));
+    }
+
+    res.status(200).json({
+        success: true,
+        data: expense
+    });
+
+})
+
+export const deleteExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const { id } = req.params;
+
+    if (!id) {
+        throw new AppError("Please provide expense id", 400);
+    }
+
+    const expense = await expenseService.deleteExpense(Number(id));
+
+    if (!expense) {
+        return next(new AppError("Failed to delete expense", 500));
+    }
+
+    res.status(204).json({
+        success: true,
+        message: "Expense deleted successfully"
+    });
+
+})
+
+export const updateExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+})

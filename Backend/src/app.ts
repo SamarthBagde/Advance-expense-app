@@ -7,6 +7,7 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 //Routes
 import categoryRouter from "./routes/category.route.js";
 import userRouter from "./routes/user.route.js";
+import expenseRouter from "./routes/expense.route.js";
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.get("/health", (_, res) => {
  */
 app.use("/api/user", userRouter);
 app.use("/api/category", categoryRouter);
+app.use("/api/expense", expenseRouter);
 
 /**
  * 404 Handler
