@@ -2,6 +2,7 @@ import { AppError } from "../utils/appError.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import type { Response, Request, NextFunction } from "express";
 import * as expenseService from "../services/expense.service.js";
+import { sendResponse } from "../utils/sendResponse.js";
 
 export const addExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -22,12 +23,7 @@ export const addExpense = asyncHandler(async (req: Request, res: Response, next:
         return next(new AppError("Failed to create expense", 500));
     }
 
-    res.status(201).json({
-        success: true,
-        message: "Expense created successfully",
-        data: expense
-    });
-
+    return sendResponse(res, 201, "Expense created successfully", expense);
 })
 
 export const getAllExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -44,11 +40,7 @@ export const getAllExpense = asyncHandler(async (req: Request, res: Response, ne
         return next(new AppError("Failed to fetch expenses", 500));
     }
 
-    res.status(200).json({
-        success: true,
-        data: expenses
-    });
-
+    return sendResponse(res, 200, "Expenses fetched successfully", expenses);
 })
 
 export const getExpenseById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -65,11 +57,7 @@ export const getExpenseById = asyncHandler(async (req: Request, res: Response, n
         return next(new AppError("Failed to fetch expense", 500));
     }
 
-    res.status(200).json({
-        success: true,
-        data: expense
-    });
-
+    return sendResponse(res, 200, "Expense fetched successfully", expense);
 })
 
 export const deleteExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -86,11 +74,7 @@ export const deleteExpense = asyncHandler(async (req: Request, res: Response, ne
         return next(new AppError("Failed to delete expense", 500));
     }
 
-    res.status(204).json({
-        success: true,
-        message: "Expense deleted successfully"
-    });
-
+    return sendResponse(res, 200, "Expense deleted successfully");
 })
 
 export const updateExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

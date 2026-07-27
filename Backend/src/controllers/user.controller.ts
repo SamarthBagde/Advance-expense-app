@@ -2,9 +2,10 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/appError.js";
 import type { IUser, IUserLoginDTO, IUserRegisterDTO, IUserResponseDTO } from "../types/user.type.js";
-import { createUser, getUserByUserUserName } from "../services/user.service.js";
+import * as userService from "../services/user.service.js";
 import { sendToken } from "../utils/jwtToken.js";
 import { comparePassword } from "../utils/comparePassword.js";
+import { sendResponse } from "../utils/sendResponse.js";
 
 export const registerUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -14,7 +15,7 @@ export const registerUser = asyncHandler(async (req: Request, res: Response, nex
         return next(new AppError("Please fill all the required fields", 400));
     }
 
-    const createdUser = await createUser({
+    const createdUser = await userService.createUser({
         username,
         email,
         password,
@@ -38,7 +39,7 @@ export const login = asyncHandler(async (req: Request, res: Response, next: Next
         return next(new AppError("Please provide username and password", 400));
     }
 
-    const userResponse: IUser | null = await getUserByUserUserName(username);
+    const userResponse: IUser | null = await userService.getUserByUserUserName(username);
 
     if (!userResponse) {
         return next(new AppError("Invalid credentials", 401));
@@ -55,4 +56,32 @@ export const login = asyncHandler(async (req: Request, res: Response, next: Next
         email: userResponse.email,
         phone: userResponse.phone,
     } as IUserResponseDTO, 200, res);
+});
+export const getAllUsers = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const users = await userService.getAllUsers();
+
+    if (!users) {
+        return next(new AppError("Failed to fetch users", 500));
+    }
+
+    return sendResponse(res, 200, "Users fetched successfully", users);
+})
+
+
+export const getUserById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const id = Number(req.params.id);
+
+    if (!id) {
+        return next(new AppError("Please provide user id", 400));
+    }
+
+    const user = await userService.getUserById(id);
+
+    if (!user) {
+        return next(new AppError("User not found", 404));
+    }
+
+    return sendResponse(res, 200, "User fetched successfully", user);
 })
