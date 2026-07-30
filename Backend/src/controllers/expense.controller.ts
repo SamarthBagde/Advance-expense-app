@@ -8,7 +8,7 @@ import { getStructuredExpenseFromText } from "../services/gemini.service.js";
 
 export const addExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
-    const { categoryId, title, amount, expenseDate, paymentMethod, note } = req.body;
+    const { categoryId, title, amount, type, expenseDate, paymentMethod, note } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
@@ -19,7 +19,7 @@ export const addExpense = asyncHandler(async (req: Request, res: Response, next:
         throw new AppError("Missing required fields", 400);
     }
 
-    const expense = await expenseService.createExpense({ userId, categoryId, title, amount, expenseDate, paymentMethod, note });
+    const expense = await expenseService.createExpense({ userId, categoryId, title, amount, type, expenseDate, paymentMethod, note });
 
     if (!expense) {
         return next(new AppError("Failed to create expense", 500));

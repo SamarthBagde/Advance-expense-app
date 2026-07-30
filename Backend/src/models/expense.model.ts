@@ -22,6 +22,8 @@ class Expense extends Model<
 
     declare amount: number;
 
+    declare type: "CREDITED" | "DEBITED";
+
     declare expenseDate: CreationOptional<Date>;
 
     declare paymentMethod:
@@ -66,6 +68,12 @@ Expense.init(
         amount: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false,
+        },
+
+        type: {
+            type: DataTypes.ENUM("CREDITED", "DEBITED"),
+            allowNull: false,
+            defaultValue: "DEBITED",
         },
 
         expenseDate: {

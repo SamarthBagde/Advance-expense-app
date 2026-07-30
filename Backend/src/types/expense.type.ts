@@ -7,12 +7,15 @@ export type PaymentMethod =
     | "WALLET"
     | "OTHER";
 
+export type TransactionType = "CREDITED" | "DEBITED";
+
 /** Payload required to create a new expense */
 export interface ICreateExpenseDTO {
     userId: number;
     categoryId: number;
     title: string;
     amount: number;
+    type?: TransactionType;
     expenseDate?: Date | string;
     paymentMethod: PaymentMethod;
     note?: string;
@@ -28,6 +31,7 @@ export interface IExpense {
     categoryId: number;
     title: string;
     amount: number;
+    type: TransactionType;
     expenseDate: Date;
     paymentMethod: PaymentMethod;
     note?: string | null;

@@ -11,6 +11,7 @@ export const createExpense = async (data: ICreateExpenseDTO): Promise<Expense> =
 
     const expense = await Expense.create({
         ...data,
+        type: data.type || "DEBITED",
         expenseDate: data.expenseDate ? new Date(data.expenseDate) : new Date(),
     } as any);
 
