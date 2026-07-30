@@ -12,7 +12,8 @@ backend/.eslintcache
 backend/*.log
 Backend/package-lock.json
 Backend/eng.traineddata
-Backend/uploads/
+Backend/uploads/*
+!Backend/uploads/.gitkeep
 *.traineddata*
 
 # ===========================
