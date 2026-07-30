@@ -11,6 +11,9 @@ backend/coverage/
 backend/.eslintcache
 backend/*.log
 Backend/package-lock.json
+Backend/eng.traineddata
+Backend/uploads/
+*.traineddata*
 
 # ===========================
 # React Native
