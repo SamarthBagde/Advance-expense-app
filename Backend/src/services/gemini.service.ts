@@ -23,6 +23,7 @@ export const getStructuredExpenseFromText = async (text: string) => {
         {
             "merchant": string | null,
             "amount": number | null,
+            "type": "CREDITED" | "DEBITED" | null,
             "date": string | null,
             "paymentMethod": string | null,
             "transactionId": string | null,
@@ -34,6 +35,7 @@ export const getStructuredExpenseFromText = async (text: string) => {
         - If data is missing return null.
         - Amount should be only number.
         - Date should be YYYY-MM-DD format.
+        - type must be "CREDITED" for income/money received or "DEBITED" for expenses/purchases/money paid out.
 
         OCR TEXT:
 
