@@ -23,8 +23,10 @@ Frontend/package-lock.json
 # Android
 Frontend/android/.gradle/
 Frontend/android/app/build/
+Frontend/android/app/.cxx/
 Frontend/android/build/
 Frontend/android/local.properties
+.cxx/
 
 # iOS
 Frontend/ios/build/
