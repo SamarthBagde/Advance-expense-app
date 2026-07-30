@@ -3,6 +3,8 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import type { Response, Request, NextFunction } from "express";
 import * as expenseService from "../services/expense.service.js";
 import { sendResponse } from "../utils/sendResponse.js";
+import { extracText } from "../services/ocr.service.js";
+import { getStructuredExpenseFromText } from "../services/gemini.service.js";
 
 export const addExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -102,3 +104,23 @@ export const updateExpense = asyncHandler(async (req: Request, res: Response, ne
 
     return sendResponse(res, 200, "Expense updated successfully", expense);
 });
+
+export const extracExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const file = req.file;
+
+    if (!file) {
+        return next(new AppError("Please provide expense image", 400));
+    }
+
+    const imagePath = file.path;
+    const text = await extracText(imagePath);
+
+    if (!text) {
+        return next(new AppError("Failed to extract text from image", 500));
+    }
+
+    const expenseDraft = await getStructuredExpenseFromText(text)
+
+    return sendResponse(res, 200, "Expense extracted successfully", expenseDraft);
+})
