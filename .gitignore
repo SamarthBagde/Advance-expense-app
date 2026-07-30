@@ -6,7 +6,6 @@ backend/dist/
 backend/build/
 backend/.env
 backend/logs/
-backend/uploads/
 backend/coverage/
 backend/.eslintcache
 backend/*.log
