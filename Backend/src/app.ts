@@ -3,6 +3,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import { requestLogger } from "./middlewares/logger.middleware.js";
 
 //Routes
 import categoryRouter from "./routes/category.route.js";
@@ -10,6 +11,11 @@ import userRouter from "./routes/user.route.js";
 import expenseRouter from "./routes/expense.route.js";
 
 const app = express();
+
+/**
+ * Request Logging
+ */
+app.use(requestLogger);
 
 /**
  * Security
