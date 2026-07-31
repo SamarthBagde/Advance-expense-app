@@ -7,6 +7,8 @@ import {
 } from "sequelize";
 
 import sequelize from "../config/database.js";
+import Category from "./category.model.js";
+import type { NonAttribute } from "sequelize";
 
 class Expense extends Model<
     InferAttributes<Expense>,
@@ -36,6 +38,8 @@ class Expense extends Model<
         | "OTHER";
 
     declare note: CreationOptional<string | null>;
+
+    declare category?: NonAttribute<Category>;
 
     declare readonly createdAt: CreationOptional<Date>;
 
@@ -114,5 +118,8 @@ Expense.init(
         timestamps: true,
     }
 );
+
+Expense.belongsTo(Category, { foreignKey: "categoryId", as: "category" });
+Category.hasMany(Expense, { foreignKey: "categoryId", as: "expenses" });
 
 export default Expense;

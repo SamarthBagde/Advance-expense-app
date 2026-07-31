@@ -1,4 +1,5 @@
 import Expense from "../models/expense.model.js";
+import Category from "../models/category.model.js";
 import { AppError } from "../utils/appError.js";
 import type { ICreateExpenseDTO, IUpdateExpenseDTO } from "../types/expense.type.js";
 
@@ -25,7 +26,16 @@ export const getAllExpense = async (userId: number): Promise<Expense[]> => {
         throw new AppError("User not found", 404);
     }
 
-    const expenses = await Expense.findAll({ where: { userId } });
+    const expenses = await Expense.findAll({
+        where: { userId },
+        include: [
+            {
+                model: Category,
+                as: "category",
+                attributes: ["id", "title"],
+            },
+        ],
+    });
 
     return expenses;
 }
@@ -36,7 +46,15 @@ export const getExpenseById = async (expenseId: number): Promise<Expense> => {
         throw new AppError("Please provide expense id", 404);
     }
 
-    const expense = await Expense.findByPk(expenseId);
+    const expense = await Expense.findByPk(expenseId, {
+        include: [
+            {
+                model: Category,
+                as: "category",
+                attributes: ["id", "title"],
+            },
+        ],
+    });
 
     if (!expense) {
         throw new AppError("Expense not found", 404);
