@@ -84,4 +84,12 @@ export const getUserById = asyncHandler(async (req: Request, res: Response, next
     }
 
     return sendResponse(res, 200, "User fetched successfully", user);
-})
+});
+
+export const getAuthUser = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+        return next(new AppError("User not found", 404));
+    }
+    return sendResponse(res, 200, "Authenticated user profile fetched successfully", req.user);
+});
+

@@ -11,16 +11,22 @@ type TokenPayload = JwtPayload & { id: number };
 
 export const protect = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { jwtToken } = req.cookies;
+    let token: string | undefined;
 
-    if (!jwtToken) {
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+      token = req.headers.authorization.split(" ")[1];
+    } else if (req.cookies && req.cookies.jwtToken) {
+      token = req.cookies.jwtToken;
+    }
+
+    if (!token) {
       return next(
         new AppError("You are not logged in please log in to get access", 401),
       );
     }
 
     const jwtSecret = getEnvVariable("JWT_SECRET_KEY");
-    const decoded = jwt.verify(jwtToken, jwtSecret) as TokenPayload;
+    const decoded = jwt.verify(token, jwtSecret) as TokenPayload;
 
     const userData = await getUserById(Number(decoded.id));
 
