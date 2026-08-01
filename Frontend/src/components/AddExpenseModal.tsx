@@ -149,7 +149,27 @@ export const AddExpenseModal: React.FC = () => {
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formScroll}>
             {errorMsg ? <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text> : null}
 
+            {prefilledForm ? (
+              <View
+                style={[
+                  styles.verificationBanner,
+                  { backgroundColor: colors.primary + '1A', borderColor: colors.primary + '40' },
+                ]}
+              >
+                <Text style={styles.verificationIcon}>✨</Text>
+                <View style={styles.verificationTextContainer}>
+                  <Text style={[styles.verificationTitle, { color: colors.primary }]}>
+                    Extracted Bill - Review & Verify
+                  </Text>
+                  <Text style={[styles.verificationSubtitle, { color: colors.textMuted }]}>
+                    Check extracted fields below. Edit anything if required, then tap Save.
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+
             {/* Type Selector (Debited vs Credited) */}
+
             <View style={[styles.typeSelectorContainer, { backgroundColor: colors.background }]}>
               <TouchableOpacity
                 style={[
@@ -445,4 +465,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
+  verificationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  verificationIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  verificationTextContainer: {
+    flex: 1,
+  },
+  verificationTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  verificationSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+  },
 });
+

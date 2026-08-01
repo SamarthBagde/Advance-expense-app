@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import axios from 'axios';
 import { API_URL } from '@env';
 import {
@@ -48,6 +49,7 @@ interface ExpenseContextType {
   fetchExpenses: () => Promise<void>;
   addTransaction: (payload: CreateExpensePayload) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
+  extractExpenseFromBillImage: (file: { uri: string; type?: string; name?: string }) => Promise<Partial<Transaction> | null>;
 }
 
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
@@ -153,6 +155,62 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
   const openVoiceModal = () => setIsVoiceModalOpen(true);
   const closeVoiceModal = () => setIsVoiceModalOpen(false);
 
+  // Extract Expense details from bill photo via backend extract API
+  const extractExpenseFromBillImage = async (file: { uri: string; type?: string; name?: string }): Promise<Partial<Transaction> | null> => {
+    try {
+      const formData = new FormData();
+      const cleanUri = Platform.OS === 'android' ? file.uri : file.uri.replace('file://', '');
+
+      formData.append('image', {
+        uri: cleanUri,
+        type: file.type || 'image/jpeg',
+        name: file.name || `receipt_${Date.now()}.jpg`,
+      } as any);
+
+      const headers = {
+        ...getAuthHeaders(),
+        'Content-Type': 'multipart/form-data',
+      };
+
+      const response = await axios.post(`${API_URL}/expense/extract`, formData, { headers });
+
+      const resData = response.data;
+      const extracted = resData?.data;
+
+      if (!extracted) {
+        throw new Error('No structured bill data returned from server');
+      }
+
+      // Match extracted category name to user categories
+      let matchedCatId = categories[0]?.id || 17;
+      if (extracted.category && categories.length > 0) {
+        const foundCat = categories.find(
+          (c) => c.title.toLowerCase() === String(extracted.category).toLowerCase()
+        );
+        if (foundCat) {
+          matchedCatId = foundCat.id;
+        }
+      }
+
+      const prefilledData: Partial<Transaction> = {
+        title: extracted.merchant || extracted.title || 'Scanned Bill',
+        amount: typeof extracted.amount === 'number' ? extracted.amount : (parseFloat(extracted.amount) || 0),
+        type: extracted.type === 'CREDITED' ? 'CREDITED' : 'DEBITED',
+        categoryId: matchedCatId,
+        paymentMethod: extracted.paymentMethod || 'CASH',
+        note: extracted.note || (extracted.merchant ? `Bill photo from ${extracted.merchant}` : 'Auto-extracted from bill photo'),
+      };
+
+      setPrefilledForm(prefilledData);
+      return prefilledData;
+    } catch (error: any) {
+      const serverMsg = error.response?.data?.message || error.message || 'Failed to process bill photo';
+      console.error('Bill photo extraction error:', serverMsg);
+      showError(serverMsg);
+      return null;
+    }
+  };
+
   // Add Transaction to Backend API
   const addTransaction = async (payload: CreateExpensePayload): Promise<boolean> => {
     try {
@@ -209,7 +267,7 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
     .filter((tx) => tx.type === 'CREDITED')
     .reduce((sum, tx) => sum + tx.amount, 0);
 
-  // Total debited expenses across all transactions (Note: Can filter by current calendar month if monthly breakdown is required)
+  // Total debited expenses across all transactions
   const totalExpense = transactions
     .filter((tx) => tx.type === 'DEBITED')
     .reduce((sum, tx) => sum + tx.amount, 0);
@@ -270,6 +328,7 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
         fetchExpenses,
         addTransaction,
         deleteTransaction,
+        extractExpenseFromBillImage,
       }}
     >
       {children}

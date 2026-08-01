@@ -8,7 +8,14 @@ import {
   ActivityIndicator,
   Pressable,
   Alert,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
+import {
+  launchCamera,
+  launchImageLibrary,
+  ImagePickerResponse,
+} from 'react-native-image-picker';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -18,41 +25,106 @@ export const ScanReceiptModal: React.FC = () => {
     isScanModalOpen,
     closeScanModal,
     openAddModal,
-    setPrefilledForm,
-    categories,
+    extractExpenseFromBillImage,
   } = useExpense();
 
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<string>('');
 
-  const simulateOCRScan = async (sourceType: 'camera' | 'gallery') => {
+  const requestCameraPermission = async (): Promise<boolean> => {
+    if (Platform.OS !== 'android') return true;
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        {
+          title: 'Camera Permission Required',
+          message: 'This app needs access to your camera to take a photo of your bill.',
+          buttonPositive: 'Allow',
+          buttonNegative: 'Cancel',
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (err) {
+      console.warn('Camera permission request error:', err);
+      return false;
+    }
+  };
+
+  const handleProcessImageResponse = async (response: ImagePickerResponse) => {
+    if (response.didCancel) {
+      return;
+    }
+
+    if (response.errorCode) {
+      Alert.alert('Image Selection Error', response.errorMessage || 'Failed to select image');
+      return;
+    }
+
+    const asset = response.assets && response.assets[0];
+    if (!asset || !asset.uri) {
+      Alert.alert('Image Error', 'No valid image found.');
+      return;
+    }
+
     try {
       setIsScanning(true);
-      setStatusMsg('Analyzing receipt image with Gemini AI...');
+      setStatusMsg('Extracting bill information...');
 
-      // Simulating receipt scanner / Gemini API extraction
-      await new Promise((resolve) => setTimeout(() => resolve(null), 2000));
+      const extractedData = await extractExpenseFromBillImage({
+        uri: asset.uri,
+        type: asset.type || 'image/jpeg',
+        name: asset.fileName || `bill_${Date.now()}.jpg`,
+      });
 
-      const firstCatId = categories && categories.length > 0 ? categories[0].id : 1;
-
-      const extractedData = {
-        title: sourceType === 'camera' ? 'Supermarket Receipt' : 'Restaurant Bill',
-        amount: sourceType === 'camera' ? 450.00 : 285.00,
-        type: 'DEBITED' as const,
-        categoryId: firstCatId,
-        paymentMethod: 'CREDIT_CARD',
-        note: `Auto-extracted via ${sourceType === 'camera' ? 'Camera OCR' : 'Gallery Scan'}`,
-      };
-
-      setPrefilledForm(extractedData);
       setIsScanning(false);
-      closeScanModal();
 
-      // Open manual form with pre-filled fields for user verification
-      openAddModal();
+      if (extractedData) {
+        closeScanModal();
+        openAddModal();
+      } else {
+        Alert.alert(
+          'Extraction Error',
+          'Could not extract structured data from this image. Please try again or enter details manually.'
+        );
+      }
+
     } catch (err: any) {
       setIsScanning(false);
-      Alert.alert('Scan Failed', err?.message || 'Could not extract text from image');
+      Alert.alert('Scan Failed', err?.message || 'Could not process bill image');
+    }
+  };
+
+  const handleCaptureCamera = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Camera permission is required to capture bill photo.');
+      return;
+    }
+
+    try {
+      const response = await launchCamera({
+        mediaType: 'photo',
+        quality: 0.8,
+        cameraType: 'back',
+        saveToPhotos: false,
+      });
+
+      await handleProcessImageResponse(response);
+    } catch (error: any) {
+      Alert.alert('Camera Error', error?.message || 'Failed to launch camera');
+    }
+  };
+
+  const handleSelectGallery = async () => {
+    try {
+      const response = await launchImageLibrary({
+        mediaType: 'photo',
+        quality: 0.8,
+      });
+
+      await handleProcessImageResponse(response);
+    } catch (error: any) {
+      Alert.alert('Gallery Error', error?.message || 'Failed to open image gallery');
     }
   };
 
@@ -79,10 +151,10 @@ export const ScanReceiptModal: React.FC = () => {
 
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              📸 Receipt Scanner
+              📸 Bill Photo Model
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-              AI-powered OCR bill extraction
+              Capture bill photo & auto-extract structured data
             </Text>
           </View>
 
@@ -92,7 +164,7 @@ export const ScanReceiptModal: React.FC = () => {
                 <ActivityIndicator size="large" color={colors.primary} />
               </View>
               <Text style={[styles.scanningText, { color: colors.textPrimary }]}>
-                Scanning Receipt...
+                Processing Bill Photo...
               </Text>
               <Text style={[styles.statusText, { color: colors.textMuted }]}>
                 {statusMsg}
@@ -106,12 +178,12 @@ export const ScanReceiptModal: React.FC = () => {
                   { backgroundColor: colors.primary },
                 ]}
                 activeOpacity={0.85}
-                onPress={() => simulateOCRScan('camera')}
+                onPress={handleCaptureCamera}
               >
                 <Text style={styles.scanBtnIcon}>📷</Text>
                 <View style={styles.scanBtnTextContainer}>
                   <Text style={styles.scanBtnTitle}>Capture with Camera</Text>
-                  <Text style={styles.scanBtnSubtitle}>Take a live photo of paper receipt</Text>
+                  <Text style={styles.scanBtnSubtitle}>Take a live photo of paper receipt or bill</Text>
                 </View>
               </TouchableOpacity>
 
@@ -121,7 +193,7 @@ export const ScanReceiptModal: React.FC = () => {
                   { backgroundColor: colors.background, borderColor: colors.surfaceLight },
                 ]}
                 activeOpacity={0.85}
-                onPress={() => simulateOCRScan('gallery')}
+                onPress={handleSelectGallery}
               >
                 <Text style={styles.scanBtnIcon}>🖼️</Text>
                 <View style={styles.scanBtnTextContainer}>
@@ -263,3 +335,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
