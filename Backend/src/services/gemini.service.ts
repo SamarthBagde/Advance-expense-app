@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(
 );
 
 const model = genAI.getGenerativeModel({
-    model: "gemini-3.5-flash"
+    model: "gemini-3.5-flash-lite"
 });
 
 export const getStructuredExpenseFromText = async (text: string) => {
