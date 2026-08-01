@@ -1,32 +1,31 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { StatusBar, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, StatusBar, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
-import Home from './src/screen/Home';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { ExpenseProvider } from './src/context/ExpenseContext';
+import { ErrorProvider } from './src/context/ErrorContext';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+import BottomTabNavigator from './src/navigation/BottomTabNavigator';
 import AuthNavigator from './src/navigation/AuthNavigation';
+import { AddExpenseModal } from './src/components/AddExpenseModal';
+import { AddExpenseOptionsModal } from './src/components/AddExpenseOptionsModal';
+import { ScanReceiptModal } from './src/components/ScanReceiptModal';
+import { VoiceEntryModal } from './src/components/VoiceEntryModal';
 
 function AppContent() {
   const { colors, isDark } = useTheme();
   const { isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-
-
-
-  }, [isAuthenticated]);
-
   if (isLoading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]} >
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
-    )
+    );
   }
+
   return (
     <SafeAreaProvider>
       <StatusBar
@@ -34,37 +33,33 @@ function AppContent() {
         backgroundColor={colors.background}
       />
       <NavigationContainer>
-        {
-          isAuthenticated ? (
-            <>
-              <Home />
-            </>
-          ) : (
-            <AuthNavigator />
-          )
-        }
+        {isAuthenticated ? (
+          <ExpenseProvider>
+            <BottomTabNavigator />
+            <AddExpenseModal />
+            <AddExpenseOptionsModal />
+            <ScanReceiptModal />
+            <VoiceEntryModal />
+          </ExpenseProvider>
+        ) : (
+          <AuthNavigator />
+        )}
       </NavigationContainer>
     </SafeAreaProvider>
-  )
+  );
 }
-
-// function MainApp() {
-//     return (
-//         <ExpenseProvider>
-//         <AppContent />
-//         </ExpenseProvider>
-//     );
-// }
-
-
 
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ErrorProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </ThemeProvider>
+      </ErrorProvider>
+    </ErrorBoundary>
   );
 }
 
