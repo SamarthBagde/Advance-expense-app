@@ -48,8 +48,11 @@ export const getStructuredExpenseFromText = async (text: string) => {
 
         // Strip markdown backticks if returned (e.g. ```json ... ```)
         const cleanedResponse = responseText.replace(/```json|```/g, "").trim();
+        const parsedData = JSON.parse(cleanedResponse);
 
-        return JSON.parse(cleanedResponse);
+        console.log("Gemini Output:", parsedData);
+
+        return parsedData;
     } catch (error: any) {
         if (error?.status === 429 || error?.message?.includes("429")) {
             throw new AppError("Gemini API rate limit exceeded. Please wait 20 seconds and try again.", 429);
