@@ -96,7 +96,13 @@ export const updateExpense = asyncHandler(async (req: Request, res: Response, ne
         throw new AppError("Please provide expense id", 400);
     }
 
-    const expense = await expenseService.updateExpense(Number(id), userId, req.body);
+    const updateData = { ...req.body };
+    delete updateData.id;
+    delete updateData.userId;
+    delete updateData.createdAt;
+    delete updateData.updatedAt;
+
+    const expense = await expenseService.updateExpense(Number(id), userId, updateData);
 
     if (!expense) {
         return next(new AppError("Failed to update expense", 500));

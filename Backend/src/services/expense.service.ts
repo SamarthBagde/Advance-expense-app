@@ -98,6 +98,16 @@ export const updateExpense = async (expenseId: number, userId: number, data: IUp
         throw new AppError("You do not have permission to update this expense", 403);
     }
 
-    await expense.update(data as any);
+    // Whitelist allowed fields to prevent modifying critical info (id, userId, createdAt, updatedAt)
+    const allowedFields = ["title", "amount", "categoryId", "type", "expenseDate", "paymentMethod", "note"];
+    const sanitizedData: Record<string, any> = {};
+
+    for (const key of allowedFields) {
+        if (key in (data as any) && (data as any)[key] !== undefined) {
+            sanitizedData[key] = (data as any)[key];
+        }
+    }
+
+    await expense.update(sanitizedData);
     return expense;
 };

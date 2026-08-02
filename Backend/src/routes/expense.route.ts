@@ -8,7 +8,7 @@ const expenseRouter = Router();
 expenseRouter.get("/", protect, ExpenseController.getAllExpense);
 expenseRouter.post("/add", protect, ExpenseController.addExpense);
 expenseRouter.get("/:id", protect, ExpenseController.getExpenseById);
-expenseRouter.put("/update/:id", protect, ExpenseController.updateExpense);
+expenseRouter.patch("/update/:id", protect, ExpenseController.updateExpense);
 expenseRouter.delete("/delete/:id", protect, ExpenseController.deleteExpense);
 
 expenseRouter.post("/extract", protect, upload.single("image"), ExpenseController.extracExpense);

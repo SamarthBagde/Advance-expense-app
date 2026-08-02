@@ -18,9 +18,9 @@ export const sendToken = (
 ) => {
   const token = signToken(user.id);
 
-  // jwt token will expire in days
+
   const options = {
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // this is cookie exp
     httpOnly: true,
   };
 
