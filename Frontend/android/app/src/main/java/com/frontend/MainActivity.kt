@@ -1,5 +1,6 @@
 package com.frontend
 
+import android.content.Intent
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -19,4 +20,14 @@ class MainActivity : ReactActivity() {
    */
   override fun createReactActivityDelegate(): ReactActivityDelegate =
       DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+
+  /**
+   * Required for react-native-receive-sharing-intent to handle shared media/files (e.g. UPI transaction screenshots)
+   * when the app is already open or running in the background (singleTask launchMode).
+   */
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+  }
 }
+

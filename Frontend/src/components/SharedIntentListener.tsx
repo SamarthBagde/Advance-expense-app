@@ -9,7 +9,9 @@ export const SharedIntentListener: React.FC = () => {
   const { extractExpenseFromBillImage, openAddModal } = useExpense();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Checks for incoming shared intent files (e.g. UPI screenshots shared via GPay, PhonePe, Paytm, Gallery)
   const checkReceivedFiles = () => {
+    // Reset JS clear flag so ReceiveSharingIntent reads incoming files on each app foreground / intent update
     if ((ReceiveSharingIntent as any).isClear !== undefined) {
       (ReceiveSharingIntent as any).isClear = false;
     }
@@ -25,34 +27,40 @@ export const SharedIntentListener: React.FC = () => {
           try {
             setIsProcessing(true);
 
+            // Extract UPI transaction data (amount, merchant, date, etc.) from the shared image via OCR/parser
             const extracted = await extractExpenseFromBillImage({
               uri: fileUri,
               type: sharedFile.mimeType || 'image/jpeg',
               name: sharedFile.fileName || `upi_share_${Date.now()}.jpg`,
-
             });
-
-            setIsProcessing(false);
 
             if (extracted) {
               openAddModal();
             }
           } catch (err) {
-            setIsProcessing(false);
             console.error('Shared UPI transaction processing error:', err);
+          } finally {
+            setIsProcessing(false);
+            // Clear processed intent data so subsequent share actions can be received cleanly
+            ReceiveSharingIntent.clearReceivedFiles();
           }
+        } else {
+          ReceiveSharingIntent.clearReceivedFiles();
         }
       },
       (error: any) => {
         console.warn('ReceiveSharingIntent error:', error);
+        ReceiveSharingIntent.clearReceivedFiles();
       },
       'ShareMedia'
     );
   };
 
   useEffect(() => {
+    // Initial check on mount (e.g. cold start via share intent)
     checkReceivedFiles();
 
+    // Listen for app state transitions to re-check intents when bringing the app to foreground
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
         checkReceivedFiles();
