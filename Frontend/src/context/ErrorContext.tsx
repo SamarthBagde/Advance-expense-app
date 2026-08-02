@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { StyleSheet, Text, View, Animated, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Colors } from '../theme/colors';
 
+import { WarningIcon } from '../components/Icons';
+
 interface ErrorContextType {
   error: string | null;
   showError: (message: string) => void;
@@ -29,7 +31,9 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       {error ? (
         <SafeAreaView style={styles.toastContainer} pointerEvents="box-none">
           <View style={styles.toastCard}>
-            <Text style={styles.toastIcon}>⚠️</Text>
+            <View style={{ marginRight: 10 }}>
+              <WarningIcon color="#EF4444" size={18} />
+            </View>
             <Text style={styles.toastText} numberOfLines={2}>
               {error}
             </Text>
@@ -39,6 +43,7 @@ export const ErrorProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           </View>
         </SafeAreaView>
       ) : null}
+
     </ErrorContext.Provider>
   );
 };

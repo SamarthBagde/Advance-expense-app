@@ -12,6 +12,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import { SparklesIcon } from './Icons';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -156,7 +157,9 @@ export const AddExpenseModal: React.FC = () => {
                   { backgroundColor: colors.primary + '1A', borderColor: colors.primary + '40' },
                 ]}
               >
-                <Text style={styles.verificationIcon}>✨</Text>
+                <View style={{ marginRight: 10 }}>
+                  <SparklesIcon color={colors.primary} size={20} />
+                </View>
                 <View style={styles.verificationTextContainer}>
                   <Text style={[styles.verificationTitle, { color: colors.primary }]}>
                     Extracted Bill - Review & Verify
@@ -167,6 +170,7 @@ export const AddExpenseModal: React.FC = () => {
                 </View>
               </View>
             ) : null}
+
 
             {/* Type Selector (Debited vs Credited) */}
 

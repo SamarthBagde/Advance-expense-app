@@ -1,6 +1,8 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 
+import { WarningIcon } from './Icons';
+
 interface Props {
   children: ReactNode;
 }
@@ -33,8 +35,11 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <SafeAreaView style={styles.container}>
           <View style={styles.content}>
-            <Text style={styles.icon}>⚠️</Text>
+            <View style={{ marginBottom: 16 }}>
+              <WarningIcon color="#EF4444" size={44} />
+            </View>
             <Text style={styles.title}>Something went wrong</Text>
+
             <Text style={styles.subtitle}>
               An unexpected error occurred. Don't worry, your data is safe.
             </Text>

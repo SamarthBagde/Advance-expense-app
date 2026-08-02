@@ -22,7 +22,8 @@
     "react-native-quick-actions": "^0.3.13",
     "react-native-receive-sharing-intent": "^2.0.0",
     "react-native-safe-area-context": "^5.8.0",
-    "react-native-screens": "^4.26.2"
+    "react-native-screens": "^4.26.2",
+    "react-native-svg": "^15.15.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

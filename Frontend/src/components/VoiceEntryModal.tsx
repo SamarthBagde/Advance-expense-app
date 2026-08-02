@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Pressable,
 } from 'react-native';
+import { MicIcon } from './Icons';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -76,9 +77,12 @@ export const VoiceEntryModal: React.FC = () => {
           </View>
 
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              🎙️ Voice Assistant
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <MicIcon color={colors.primary} size={22} />
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                Voice Assistant
+              </Text>
+            </View>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
               Speak to log your expense automatically
             </Text>
@@ -100,9 +104,10 @@ export const VoiceEntryModal: React.FC = () => {
               {isListening ? (
                 <ActivityIndicator size="large" color="#FFFFFF" />
               ) : (
-                <Text style={styles.micEmoji}>🎙️</Text>
+                <MicIcon color="#FFFFFF" size={36} />
               )}
             </TouchableOpacity>
+
 
             <Text style={[styles.promptText, { color: colors.textPrimary }]}>
               {isListening ? 'Listening...' : 'Tap the microphone to speak'}

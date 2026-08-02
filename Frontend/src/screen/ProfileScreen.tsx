@@ -6,6 +6,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { Colors } from '../theme/colors';
 
+import { PhoneIcon } from '../components/Icons';
+
 export default function ProfileScreen() {
   const { colors, themeMode, setThemeMode } = useTheme();
   const { userProfile, totalIncome, totalExpense, transactions } = useExpense();
@@ -32,11 +34,13 @@ export default function ProfileScreen() {
           <Text style={[styles.name, { color: colors.textPrimary }]}>{displayName}</Text>
           <Text style={[styles.email, { color: colors.textMuted }]}>{displayEmail}</Text>
           {user?.phone ? (
-            <View style={[styles.phoneBadge, { backgroundColor: colors.surfaceLight }]}>
-              <Text style={[styles.phoneText, { color: colors.textSecondary }]}>📞 {user.phone}</Text>
+            <View style={[styles.phoneBadge, { backgroundColor: colors.surfaceLight, flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+              <PhoneIcon color={colors.textSecondary} size={14} />
+              <Text style={[styles.phoneText, { color: colors.textSecondary }]}>{user.phone}</Text>
             </View>
           ) : null}
         </View>
+
 
         {/* Overview Quick Stats */}
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceLight }]}>

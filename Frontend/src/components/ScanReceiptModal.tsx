@@ -16,6 +16,7 @@ import {
   launchImageLibrary,
   ImagePickerResponse,
 } from 'react-native-image-picker';
+import { CameraIcon, GalleryIcon } from './Icons';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -150,9 +151,12 @@ export const ScanReceiptModal: React.FC = () => {
           </View>
 
           <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              📸 Bill Photo Model
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <CameraIcon color={colors.primary} size={24} />
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                Bill Photo Model
+              </Text>
+            </View>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
               Capture bill photo & auto-extract structured data
             </Text>
@@ -180,7 +184,9 @@ export const ScanReceiptModal: React.FC = () => {
                 activeOpacity={0.85}
                 onPress={handleCaptureCamera}
               >
-                <Text style={styles.scanBtnIcon}>📷</Text>
+                <View style={{ marginRight: 14 }}>
+                  <CameraIcon color="#FFFFFF" size={24} />
+                </View>
                 <View style={styles.scanBtnTextContainer}>
                   <Text style={styles.scanBtnTitle}>Capture with Camera</Text>
                   <Text style={styles.scanBtnSubtitle}>Take a live photo of paper receipt or bill</Text>
@@ -195,7 +201,9 @@ export const ScanReceiptModal: React.FC = () => {
                 activeOpacity={0.85}
                 onPress={handleSelectGallery}
               >
-                <Text style={styles.scanBtnIcon}>🖼️</Text>
+                <View style={{ marginRight: 14 }}>
+                  <GalleryIcon color={colors.primary} size={24} />
+                </View>
                 <View style={styles.scanBtnTextContainer}>
                   <Text style={[styles.scanBtnTitleSecondary, { color: colors.textPrimary }]}>
                     Upload from Gallery
@@ -207,6 +215,7 @@ export const ScanReceiptModal: React.FC = () => {
               </TouchableOpacity>
             </View>
           )}
+
 
           <TouchableOpacity
             style={[styles.closeBtn, { backgroundColor: colors.surfaceLight }]}

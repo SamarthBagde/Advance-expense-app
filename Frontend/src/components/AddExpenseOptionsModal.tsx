@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native';
+import { DocumentIcon, CameraIcon, MicIcon } from './Icons';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -78,7 +79,7 @@ export const AddExpenseOptionsModal: React.FC = () => {
               onPress={() => handleSelectOption('manual')}
             >
               <View style={[styles.iconBox, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
-                <Text style={styles.cardEmoji}>📝</Text>
+                <DocumentIcon color="#6366F1" size={22} />
               </View>
               <View style={styles.cardTextContent}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Manual Entry</Text>
@@ -96,11 +97,11 @@ export const AddExpenseOptionsModal: React.FC = () => {
               onPress={() => handleSelectOption('camera')}
             >
               <View style={[styles.iconBox, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-                <Text style={styles.cardEmoji}>📸</Text>
+                <CameraIcon color="#10B981" size={22} />
               </View>
               <View style={styles.cardTextContent}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Scan Bill Photo</Text>
-                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>Camera OCR receipt scanner</Text>
+                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>Camera receipt scanner</Text>
               </View>
             </TouchableOpacity>
 
@@ -114,7 +115,7 @@ export const AddExpenseOptionsModal: React.FC = () => {
               onPress={() => handleSelectOption('voice')}
             >
               <View style={[styles.iconBox, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}>
-                <Text style={styles.cardEmoji}>🎙️</Text>
+                <MicIcon color="#A855F7" size={22} />
               </View>
               <View style={styles.cardTextContent}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Voice Entry</Text>
@@ -122,6 +123,7 @@ export const AddExpenseOptionsModal: React.FC = () => {
               </View>
             </TouchableOpacity>
           </View>
+
 
           {/* Close Button */}
           <TouchableOpacity
