@@ -315,4 +315,12 @@ export const PhoneIcon: React.FC<IconProps> = ({ color = '#6B7280', size = 16 })
   </View>
 );
 
+// Professional Edit / Pencil Icon
+export const EditIcon: React.FC<IconProps> = ({ color = '#6B7280', size = 16 }) => (
+  <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <Text style={{ color, fontSize: size * 0.85, fontWeight: '700', includeFontPadding: false }}>✎</Text>
+  </View>
+);
+
+
 

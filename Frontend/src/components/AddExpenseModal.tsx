@@ -32,8 +32,10 @@ export const AddExpenseModal: React.FC = () => {
     isAddModalOpen,
     closeAddModal,
     addTransaction,
+    updateTransaction,
     prefilledForm,
     setPrefilledForm,
+    editingTransaction,
     categories,
   } = useExpense();
 
@@ -64,7 +66,16 @@ export const AddExpenseModal: React.FC = () => {
   }, [categories]);
 
   useEffect(() => {
-    if (prefilledForm && isAddModalOpen) {
+    if (editingTransaction && isAddModalOpen) {
+      setTitle(editingTransaction.title || '');
+      setAmount(editingTransaction.amount ? String(editingTransaction.amount) : '');
+      setType(editingTransaction.type || 'DEBITED');
+      if (editingTransaction.categoryId) {
+        setSelectedCategoryId(editingTransaction.categoryId);
+      }
+      setPaymentMethod(editingTransaction.paymentMethod || 'CASH');
+      setNote(editingTransaction.note || '');
+    } else if (prefilledForm && isAddModalOpen) {
       if (prefilledForm.title) setTitle(prefilledForm.title);
       if (prefilledForm.amount) setAmount(String(prefilledForm.amount));
       if (prefilledForm.type) setType(prefilledForm.type);
@@ -74,7 +85,7 @@ export const AddExpenseModal: React.FC = () => {
     } else if (!isAddModalOpen) {
       resetForm();
     }
-  }, [prefilledForm, isAddModalOpen]);
+  }, [editingTransaction, prefilledForm, isAddModalOpen]);
 
   const handleClose = () => {
     resetForm();
@@ -96,20 +107,32 @@ export const AddExpenseModal: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const success = await addTransaction({
-        categoryId: currentCat.id,
-        title: title.trim(),
-        amount: numAmount,
-        type,
-        expenseDate: new Date().toISOString(),
-        paymentMethod,
-        note: note.trim() || undefined,
-      });
+      let success = false;
+      if (editingTransaction) {
+        success = await updateTransaction(editingTransaction.id, {
+          categoryId: currentCat.id,
+          title: title.trim(),
+          amount: numAmount,
+          type,
+          paymentMethod,
+          note: note.trim() || undefined,
+        });
+      } else {
+        success = await addTransaction({
+          categoryId: currentCat.id,
+          title: title.trim(),
+          amount: numAmount,
+          type,
+          expenseDate: new Date().toISOString(),
+          paymentMethod,
+          note: note.trim() || undefined,
+        });
+      }
 
       if (success) {
         resetForm();
       } else {
-        setErrorMsg('Failed to save transaction. Please try again.');
+        setErrorMsg(editingTransaction ? 'Failed to update transaction. Please try again.' : 'Failed to save transaction. Please try again.');
         resetForm();
       }
     } catch (err) {
@@ -140,7 +163,7 @@ export const AddExpenseModal: React.FC = () => {
         >
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              Add Transaction
+              {editingTransaction ? 'Edit Expense' : 'Add Transaction'}
             </Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
               <Text style={[styles.closeBtnText, { color: colors.textMuted }]}>✕</Text>
@@ -213,7 +236,9 @@ export const AddExpenseModal: React.FC = () => {
             </View>
 
             {/* Amount Field */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Amount (₹)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              Amount (₹) <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
             <View
               style={[
                 styles.amountInputRow,
@@ -235,7 +260,9 @@ export const AddExpenseModal: React.FC = () => {
             </View>
 
             {/* Title / Note */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Title / Description</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              Title / Description <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
             <TextInput
               style={[
                 styles.textInput,
@@ -272,7 +299,9 @@ export const AddExpenseModal: React.FC = () => {
             />
 
             {/* Category Selector */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Category</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              Category <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
             <View style={styles.pillWrap}>
               {categories.map((cat) => (
                 <TouchableOpacity
@@ -298,7 +327,9 @@ export const AddExpenseModal: React.FC = () => {
             </View>
 
             {/* Payment Method */}
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>Payment Method</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+              Payment Method <Text style={{ color: colors.danger }}>*</Text>
+            </Text>
             <View style={styles.pillWrap}>
               {PAYMENT_METHODS.map((item) => (
                 <TouchableOpacity
@@ -338,7 +369,9 @@ export const AddExpenseModal: React.FC = () => {
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text style={styles.submitBtnText}>
-                  Save {type === 'CREDITED' ? 'Credited Amount' : 'Debited Expense'}
+                  {editingTransaction
+                    ? 'Update Expense'
+                    : `Save ${type === 'CREDITED' ? 'Credited Amount' : 'Debited Expense'}`}
                 </Text>
               )}
             </TouchableOpacity>

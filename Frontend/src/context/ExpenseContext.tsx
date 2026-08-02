@@ -45,9 +45,15 @@ interface ExpenseContextType {
   closeVoiceModal: () => void;
   prefilledForm: Partial<Transaction> | null;
   setPrefilledForm: (data: Partial<Transaction> | null) => void;
+  editingTransaction: Transaction | null;
+  openEditModal: (transaction: Transaction) => void;
+  selectedExpenseDetail: Transaction | null;
+  openExpenseDetailModal: (transaction: Transaction) => void;
+  closeExpenseDetailModal: () => void;
   fetchCategories: () => Promise<void>;
   fetchExpenses: () => Promise<void>;
   addTransaction: (payload: CreateExpensePayload) => Promise<boolean>;
+  updateTransaction: (id: string, payload: Partial<CreateExpensePayload>) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
   extractExpenseFromBillImage: (file: { uri: string; type?: string; name?: string }) => Promise<Partial<Transaction> | null>;
 }
@@ -75,6 +81,8 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [isScanModalOpen, setIsScanModalOpen] = useState<boolean>(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
   const [prefilledForm, setPrefilledForm] = useState<Partial<Transaction> | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [selectedExpenseDetail, setSelectedExpenseDetail] = useState<Transaction | null>(null);
 
   // Fetch Categories from Backend API
   const fetchCategories = async () => {
@@ -143,8 +151,28 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
   }, [isAuthenticated]);
 
   // Modal Handlers
-  const openAddModal = () => setIsAddModalOpen(true);
-  const closeAddModal = () => setIsAddModalOpen(false);
+  const openAddModal = () => {
+    setEditingTransaction(null);
+    setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (tx: Transaction) => {
+    setEditingTransaction(tx);
+    setIsAddModalOpen(true);
+  };
+
+  const closeAddModal = () => {
+    setIsAddModalOpen(false);
+    setEditingTransaction(null);
+  };
+
+  const openExpenseDetailModal = (tx: Transaction) => {
+    setSelectedExpenseDetail(tx);
+  };
+
+  const closeExpenseDetailModal = () => {
+    setSelectedExpenseDetail(null);
+  };
 
   const openAddOptionsModal = () => setIsAddOptionsOpen(true);
   const closeAddOptionsModal = () => setIsAddOptionsOpen(false);
@@ -246,6 +274,51 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  // Update Expense on Backend API
+  const updateTransaction = async (
+    id: string,
+    payload: Partial<CreateExpensePayload>
+  ): Promise<boolean> => {
+    try {
+      const response = await axios.patch(`${API_URL}/expense/update/${id}`, payload, {
+        headers: getAuthHeaders(),
+      });
+
+      const resData = response.data;
+      const updatedItem = resData?.data;
+
+      const categoryTitle = categories.find((c) => c.id === payload.categoryId)?.title || '-';
+
+      setTransactions((prev) =>
+        prev.map((tx) => {
+          if (tx.id === id) {
+            return {
+              ...tx,
+              categoryId: payload.categoryId !== undefined ? payload.categoryId : tx.categoryId,
+              title: payload.title !== undefined ? payload.title : tx.title,
+              category: categoryTitle !== '-' ? categoryTitle : tx.category,
+              amount: payload.amount !== undefined ? payload.amount : tx.amount,
+              type: payload.type || tx.type,
+              paymentMethod: payload.paymentMethod || tx.paymentMethod,
+              note: payload.note !== undefined ? payload.note : tx.note,
+              date: updatedItem?.expenseDate
+                ? new Date(updatedItem.expenseDate).toLocaleDateString()
+                : tx.date,
+            };
+          }
+          return tx;
+        })
+      );
+      closeAddModal();
+      return true;
+    } catch (error: any) {
+      const serverMsg = error.response?.data?.message || error.message || 'Failed to update expense';
+      console.error('Failed to update expense on backend:', serverMsg);
+      showError(serverMsg);
+      return false;
+    }
+  };
+
   // Delete Transaction from Backend API
   const deleteTransaction = async (id: string): Promise<boolean> => {
     try {
@@ -324,9 +397,15 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
         closeVoiceModal,
         prefilledForm,
         setPrefilledForm,
+        editingTransaction,
+        openEditModal,
+        selectedExpenseDetail,
+        openExpenseDetailModal,
+        closeExpenseDetailModal,
         fetchCategories,
         fetchExpenses,
         addTransaction,
+        updateTransaction,
         deleteTransaction,
         extractExpenseFromBillImage,
       }}

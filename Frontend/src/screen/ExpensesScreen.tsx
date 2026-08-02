@@ -5,10 +5,13 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
+import { EditIcon } from '../components/Icons';
 
 export default function ExpensesScreen() {
   const { colors } = useTheme();
@@ -18,10 +21,38 @@ export default function ExpensesScreen() {
     categoryBreakdown,
     totalExpense,
     openAddOptionsModal,
+    openEditModal,
+    openExpenseDetailModal,
     deleteTransaction,
   } = useExpense();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDeleteConfirm = (id: string, title: string) => {
+    Alert.alert(
+      'Delete Expense',
+      `Are you sure you want to delete "${title}"?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingId(id);
+            try {
+              await deleteTransaction(id);
+            } finally {
+              setDeletingId(null);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const filterCategories = ['All', ...categories.map((c) => c.title)];
 
@@ -167,12 +198,14 @@ export default function ExpensesScreen() {
             </View>
           ) : (
             filteredTransactions.map((tx) => (
-              <View
+              <TouchableOpacity
                 key={tx.id}
                 style={[
                   styles.expenseCard,
                   { backgroundColor: colors.surface, borderColor: colors.surfaceLight },
                 ]}
+                onPress={() => openExpenseDetailModal(tx)}
+                activeOpacity={0.7}
               >
                 <View style={styles.expenseLeft}>
                   <View style={[styles.methodBadge, { backgroundColor: colors.surfaceLight }]}>
@@ -202,14 +235,28 @@ export default function ExpensesScreen() {
                   </Text>
 
                   <TouchableOpacity
-                    onPress={() => deleteTransaction(tx.id)}
-                    style={styles.deleteBtn}
+                    onPress={() => openEditModal(tx)}
+                    style={styles.actionBtn}
+                    disabled={deletingId === tx.id}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Text style={[styles.deleteBtnText, { color: colors.textMuted }]}>✕</Text>
+                    <EditIcon color={deletingId === tx.id ? colors.textMuted : colors.primaryLight} size={15} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => handleDeleteConfirm(tx.id, tx.title)}
+                    style={styles.actionBtn}
+                    disabled={deletingId === tx.id}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    {deletingId === tx.id ? (
+                      <ActivityIndicator size="small" color={colors.danger} />
+                    ) : (
+                      <Text style={[styles.deleteBtnText, { color: colors.textMuted }]}>✕</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </ScrollView>
@@ -415,7 +462,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  deleteBtn: {
+  actionBtn: {
     padding: 4,
   },
   deleteBtnText: {

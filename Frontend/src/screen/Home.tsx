@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
-import { ArrowUpRightIcon, ArrowDownLeftIcon, PlusIcon } from '../components/Icons';
+import { ArrowUpRightIcon, ArrowDownLeftIcon } from '../components/Icons';
 
 export default function Home() {
   const { colors } = useTheme();
@@ -77,9 +77,6 @@ export default function Home() {
         {/* Recent Transactions Section */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={[styles.seeAllText, { color: colors.primaryLight }]}>View All</Text>
-          </TouchableOpacity>
         </View>
 
         {recentTransactions.map((tx) => (

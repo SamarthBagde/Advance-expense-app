@@ -13,6 +13,8 @@ import { AddExpenseModal } from './src/components/AddExpenseModal';
 import { AddExpenseOptionsModal } from './src/components/AddExpenseOptionsModal';
 import { ScanReceiptModal } from './src/components/ScanReceiptModal';
 import { VoiceEntryModal } from './src/components/VoiceEntryModal';
+import { ExpenseDetailModal } from './src/components/ExpenseDetailModal';
+import { SharedIntentListener } from './src/components/SharedIntentListener';
 
 function AppContent() {
   const { colors, isDark } = useTheme();
@@ -40,6 +42,8 @@ function AppContent() {
             <AddExpenseOptionsModal />
             <ScanReceiptModal />
             <VoiceEntryModal />
+            <ExpenseDetailModal />
+            <SharedIntentListener />
           </ExpenseProvider>
         ) : (
           <AuthNavigator />
@@ -72,3 +76,5 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
+
