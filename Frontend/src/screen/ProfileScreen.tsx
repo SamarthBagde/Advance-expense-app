@@ -45,7 +45,7 @@ export default function ProfileScreen() {
         {/* Overview Quick Stats */}
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceLight }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Overview</Text>
-          
+
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>Income</Text>
@@ -95,7 +95,7 @@ export default function ProfileScreen() {
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.surfaceLight }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Account</Text>
           <TouchableOpacity style={[styles.logoutBtn]} onPress={logout}>
-            <Text style={styles.logoutBtnText}>Sign Out</Text>
+            <Text style={styles.logoutBtnText}>Log Out</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

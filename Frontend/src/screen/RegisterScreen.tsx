@@ -101,7 +101,9 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
                         {/* Username Input */}
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Username *</Text>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>
+                                Username <Text style={{ color: colors.danger }}>*</Text>
+                            </Text>
                             <TextInput
                                 style={[
                                     styles.input,
@@ -128,7 +130,9 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
                         {/* Email Input */}
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Email *</Text>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>
+                                Email <Text style={{ color: colors.danger }}>*</Text>
+                            </Text>
                             <TextInput
                                 style={[
                                     styles.input,
@@ -176,7 +180,9 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
                         {/* Password Input */}
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Password *</Text>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>
+                                Password <Text style={{ color: colors.danger }}>*</Text>
+                            </Text>
                             <View style={styles.passwordWrapper}>
                                 <TextInput
                                     style={[
@@ -214,7 +220,9 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
 
                         {/* Confirm Password Input */}
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Confirm Password *</Text>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>
+                                Confirm Password <Text style={{ color: colors.danger }}>*</Text>
+                            </Text>
                             <TextInput
                                 style={[
                                     styles.input,

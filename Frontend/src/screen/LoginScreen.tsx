@@ -90,7 +90,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
                         {/* Username Input */}
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Username</Text>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>
+                                Username <Text style={{ color: colors.danger }}>*</Text>
+                            </Text>
                             <TextInput
                                 style={[
                                     styles.input,
@@ -117,7 +119,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
                         {/* Password Input */}
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
+                            <Text style={[styles.label, { color: colors.textSecondary }]}>
+                                Password <Text style={{ color: colors.danger }}>*</Text>
+                            </Text>
                             <View style={styles.passwordWrapper}>
                                 <TextInput
                                     style={[
