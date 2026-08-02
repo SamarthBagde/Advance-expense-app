@@ -130,3 +130,20 @@ export const extracExpense = asyncHandler(async (req: Request, res: Response, ne
 
     return sendResponse(res, 200, "Expense extracted successfully", expenseDraft);
 })
+
+export const extracExpenseFromText = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+
+    const { text } = req.body;
+
+    if (!text) {
+        return next(new AppError("Please provide expense text", 400));
+    }
+
+    const expenseDraft = await getStructuredExpenseFromText(text)
+
+    if (!expenseDraft) {
+        return next(new AppError("Failed to extract expense from text", 500));
+    }
+
+    return sendResponse(res, 200, "Expense extracted successfully", expenseDraft);
+})

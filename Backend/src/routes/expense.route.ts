@@ -12,5 +12,6 @@ expenseRouter.patch("/update/:id", protect, ExpenseController.updateExpense);
 expenseRouter.delete("/delete/:id", protect, ExpenseController.deleteExpense);
 
 expenseRouter.post("/extract", protect, upload.single("image"), ExpenseController.extracExpense);
+expenseRouter.post("/text", protect, ExpenseController.extracExpenseFromText);
 
 export default expenseRouter;
