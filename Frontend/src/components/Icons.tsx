@@ -322,5 +322,43 @@ export const EditIcon: React.FC<IconProps> = ({ color = '#6B7280', size = 16 }) 
   </View>
 );
 
+// Professional Filter / Funnel Icon
+export const FilterIcon: React.FC<IconProps> = ({ color = '#FFFFFF', size = 18 }) => (
+  <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{
+        width: size * 0.9,
+        height: size * 0.16,
+        backgroundColor: color,
+        borderTopLeftRadius: 2,
+        borderTopRightRadius: 2,
+      }}
+    />
+    <View
+      style={{
+        width: 0,
+        height: 0,
+        borderLeftWidth: size * 0.45,
+        borderRightWidth: size * 0.45,
+        borderTopWidth: size * 0.4,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+        borderTopColor: color,
+        marginTop: 1,
+      }}
+    />
+    <View
+      style={{
+        width: size * 0.16,
+        height: size * 0.3,
+        backgroundColor: color,
+        borderBottomLeftRadius: 1,
+        borderBottomRightRadius: 1,
+        marginTop: -1,
+      }}
+    />
+  </View>
+);
+
 
 
