@@ -66,3 +66,15 @@ export interface UserProfile {
   name: string;
   email: string;
 }
+
+export type SortByField = 'expenseDate' | 'amount';
+export type SortOrder = 'ASC' | 'DESC' | 'asc' | 'desc';
+
+export interface IExpenseFilterDTO {
+  categoryId?: number;
+  startDate?: string;
+  endDate?: string;
+  expenseDate?: string;
+  sortBy?: SortByField;
+  sortOrder?: SortOrder;
+}
