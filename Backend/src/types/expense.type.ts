@@ -38,3 +38,27 @@ export interface IExpense {
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+
+export interface IExtractedExpense {
+    merchant: string | null;
+    amount: number | null;
+    type: "CREDITED" | "DEBITED" | null;
+    date: string | null;
+    paymentMethod: string | null;
+    transactionId: string | null;
+    category: string | null;
+}
+
+export type SortByField = "expenseDate" | "amount";
+export type SortOrder = "ASC" | "DESC" | "asc" | "desc";
+
+/** Query filters for retrieving expenses */
+export interface IExpenseFilterDTO {
+    categoryId?: number;
+    startDate?: string;
+    endDate?: string;
+    expenseDate?: string;
+    sortBy?: SortByField;
+    sortOrder?: SortOrder;
+}

@@ -5,6 +5,8 @@ import * as expenseService from "../services/expense.service.js";
 import { sendResponse } from "../utils/sendResponse.js";
 import { extracText } from "../services/ocr.service.js";
 import { getStructuredExpenseFromText } from "../services/gemini.service.js";
+import type Expense from "../models/expense.model.js";
+import type { IExpenseFilterDTO, IExtractedExpense, SortByField, SortOrder } from "../types/expense.type.js";
 
 export const addExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -19,13 +21,13 @@ export const addExpense = asyncHandler(async (req: Request, res: Response, next:
         throw new AppError("Missing required fields", 400);
     }
 
-    const expense = await expenseService.createExpense({ userId, categoryId, title, amount, type, expenseDate, paymentMethod, note });
+    const expense: Expense = await expenseService.createExpense({ userId, categoryId, title, amount, type, expenseDate, paymentMethod, note });
 
     if (!expense) {
         return next(new AppError("Failed to create expense", 500));
     }
 
-    return sendResponse(res, 201, "Expense created successfully", expense);
+    return sendResponse<Expense>(res, 201, "Expense created successfully", expense);
 })
 
 export const getAllExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -36,13 +38,23 @@ export const getAllExpense = asyncHandler(async (req: Request, res: Response, ne
         return next(new AppError("Unauthorized", 401));
     }
 
-    const expenses = await expenseService.getAllExpense(Number(userId));
+    const { categoryId, startDate, endDate, expenseDate, sortBy, sortOrder } = req.query;
+
+    const filters: IExpenseFilterDTO = {};
+    if (categoryId) filters.categoryId = Number(categoryId);
+    if (startDate) filters.startDate = String(startDate);
+    if (endDate) filters.endDate = String(endDate);
+    if (expenseDate) filters.expenseDate = String(expenseDate);
+    if (sortBy) filters.sortBy = String(sortBy) as SortByField;
+    if (sortOrder) filters.sortOrder = String(sortOrder) as SortOrder;
+
+    const expenses: Expense[] = await expenseService.getAllExpense(Number(userId), filters);
 
     if (!expenses) {
         return next(new AppError("Failed to fetch expenses", 500));
     }
 
-    return sendResponse(res, 200, "Expenses fetched successfully", expenses);
+    return sendResponse<Expense[]>(res, 200, "Expenses fetched successfully", expenses);
 })
 
 export const getExpenseById = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -53,13 +65,13 @@ export const getExpenseById = asyncHandler(async (req: Request, res: Response, n
         throw new AppError("Please provide expense id", 400);
     }
 
-    const expense = await expenseService.getExpenseById(Number(id));
+    const expense: Expense = await expenseService.getExpenseById(Number(id));
 
     if (!expense) {
         return next(new AppError("Failed to fetch expense", 500));
     }
 
-    return sendResponse(res, 200, "Expense fetched successfully", expense);
+    return sendResponse<Expense>(res, 200, "Expense fetched successfully", expense);
 })
 
 export const deleteExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -81,7 +93,7 @@ export const deleteExpense = asyncHandler(async (req: Request, res: Response, ne
         return next(new AppError("Failed to delete expense", 500));
     }
 
-    return sendResponse(res, 200, "Expense deleted successfully");
+    return sendResponse(res, 204, "Expense deleted successfully");
 })
 
 export const updateExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -102,13 +114,13 @@ export const updateExpense = asyncHandler(async (req: Request, res: Response, ne
     delete updateData.createdAt;
     delete updateData.updatedAt;
 
-    const expense = await expenseService.updateExpense(Number(id), userId, updateData);
+    const expense: Expense = await expenseService.updateExpense(Number(id), userId, updateData);
 
     if (!expense) {
         return next(new AppError("Failed to update expense", 500));
     }
 
-    return sendResponse(res, 200, "Expense updated successfully", expense);
+    return sendResponse<Expense>(res, 200, "Expense updated successfully", expense);
 });
 
 export const extracExpense = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -120,15 +132,15 @@ export const extracExpense = asyncHandler(async (req: Request, res: Response, ne
     }
 
     const imagePath = file.path;
-    const text = await extracText(imagePath);
+    const text: string = await extracText(imagePath);
 
     if (!text) {
         return next(new AppError("Failed to extract text from image", 500));
     }
 
-    const expenseDraft = await getStructuredExpenseFromText(text)
+    const expenseDraft: IExtractedExpense = await getStructuredExpenseFromText(text)
 
-    return sendResponse(res, 200, "Expense extracted successfully", expenseDraft);
+    return sendResponse<IExtractedExpense>(res, 200, "Expense extracted successfully", expenseDraft);
 })
 
 export const extracExpenseFromText = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -139,11 +151,11 @@ export const extracExpenseFromText = asyncHandler(async (req: Request, res: Resp
         return next(new AppError("Please provide expense text", 400));
     }
 
-    const expenseDraft = await getStructuredExpenseFromText(text)
+    const expenseDraft: IExtractedExpense = await getStructuredExpenseFromText(text)
 
     if (!expenseDraft) {
         return next(new AppError("Failed to extract expense from text", 500));
     }
 
-    return sendResponse(res, 200, "Expense extracted successfully", expenseDraft);
+    return sendResponse<IExtractedExpense>(res, 200, "Expense extracted successfully", expenseDraft);
 })

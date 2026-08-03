@@ -1,7 +1,8 @@
+import { Op, type WhereOptions } from "sequelize";
 import Expense from "../models/expense.model.js";
 import Category from "../models/category.model.js";
 import { AppError } from "../utils/appError.js";
-import type { ICreateExpenseDTO, IUpdateExpenseDTO } from "../types/expense.type.js";
+import type { ICreateExpenseDTO, IExpenseFilterDTO, IUpdateExpenseDTO } from "../types/expense.type.js";
 
 export const createExpense = async (data: ICreateExpenseDTO): Promise<Expense> => {
     const { userId, categoryId, title, amount, paymentMethod } = data;
@@ -20,14 +21,43 @@ export const createExpense = async (data: ICreateExpenseDTO): Promise<Expense> =
 };
 
 
-export const getAllExpense = async (userId: number): Promise<Expense[]> => {
+export const getAllExpense = async (userId: number, filters?: IExpenseFilterDTO): Promise<Expense[]> => {
 
     if (!userId) {
         throw new AppError("User not found", 404);
     }
 
+    const whereCondition: WhereOptions = { userId };
+
+    if (filters?.categoryId) {
+        whereCondition.categoryId = filters.categoryId;
+    }
+
+    if (filters?.startDate && filters?.endDate) {
+        whereCondition.expenseDate = {
+            [Op.between]: [new Date(filters.startDate), new Date(filters.endDate)],
+        };
+    } else if (filters?.startDate) {
+        whereCondition.expenseDate = {
+            [Op.gte]: new Date(filters.startDate),
+        };
+    } else if (filters?.endDate) {
+        whereCondition.expenseDate = {
+            [Op.lte]: new Date(filters.endDate),
+        };
+    } else if (filters?.expenseDate) {
+        whereCondition.expenseDate = new Date(filters.expenseDate);
+    }
+
+    const sortField = filters?.sortBy && ["expenseDate", "amount"].includes(filters.sortBy)
+        ? filters.sortBy
+        : "expenseDate";
+    const sortOrder = filters?.sortOrder && filters.sortOrder.toUpperCase() === "ASC"
+        ? "ASC"
+        : "DESC";
+
     const expenses = await Expense.findAll({
-        where: { userId },
+        where: whereCondition,
         include: [
             {
                 model: Category,
@@ -35,6 +65,7 @@ export const getAllExpense = async (userId: number): Promise<Expense[]> => {
                 attributes: ["id", "title"],
             },
         ],
+        order: [[sortField, sortOrder]],
     });
 
     return expenses;
