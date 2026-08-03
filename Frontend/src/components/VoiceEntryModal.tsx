@@ -37,15 +37,13 @@ export const VoiceEntryModal: React.FC = () => {
 
     await new Promise((resolve) => setTimeout(() => resolve(null), 1000));
 
-    const firstCatId = categories && categories.length > 0 ? categories[0].id : 1;
-
     // Auto-fill extracted voice command into prefilledForm
     setPrefilledForm({
       title: 'Dinner & Restaurant',
       amount: 250,
       type: 'DEBITED',
-      categoryId: firstCatId,
-      paymentMethod: 'CASH',
+      categoryId: undefined,
+      paymentMethod: '',
       note: 'Voice entry: ' + recognizedText,
     });
 

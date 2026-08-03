@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -39,11 +39,13 @@ export const AddExpenseModal: React.FC = () => {
     categories,
   } = useExpense();
 
+  const scrollViewRef = useRef<ScrollView>(null);
+
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState<'DEBITED' | 'CREDITED'>('DEBITED');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number>(1);
-  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [note, setNote] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,35 +54,32 @@ export const AddExpenseModal: React.FC = () => {
     setTitle('');
     setAmount('');
     setType('DEBITED');
-    setSelectedCategoryId(categories[0]?.id || 1);
-    setPaymentMethod('CASH');
+    setSelectedCategoryId(undefined);
+    setPaymentMethod('');
     setNote('');
     setErrorMsg('');
     setPrefilledForm(null);
   };
 
-  useEffect(() => {
-    if (categories && categories.length > 0 && !categories.some((c) => c.id === selectedCategoryId)) {
-      setSelectedCategoryId(categories[0].id);
-    }
-  }, [categories]);
+  const triggerError = (msg: string) => {
+    setErrorMsg(msg);
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  };
 
   useEffect(() => {
     if (editingTransaction && isAddModalOpen) {
       setTitle(editingTransaction.title || '');
       setAmount(editingTransaction.amount ? String(editingTransaction.amount) : '');
       setType(editingTransaction.type || 'DEBITED');
-      if (editingTransaction.categoryId) {
-        setSelectedCategoryId(editingTransaction.categoryId);
-      }
-      setPaymentMethod(editingTransaction.paymentMethod || 'CASH');
+      setSelectedCategoryId(editingTransaction.categoryId || undefined);
+      setPaymentMethod(editingTransaction.paymentMethod || '');
       setNote(editingTransaction.note || '');
     } else if (prefilledForm && isAddModalOpen) {
       if (prefilledForm.title) setTitle(prefilledForm.title);
       if (prefilledForm.amount) setAmount(String(prefilledForm.amount));
       if (prefilledForm.type) setType(prefilledForm.type);
-      if (prefilledForm.categoryId) setSelectedCategoryId(prefilledForm.categoryId);
-      if (prefilledForm.paymentMethod) setPaymentMethod(prefilledForm.paymentMethod);
+      setSelectedCategoryId(prefilledForm.categoryId || undefined);
+      setPaymentMethod(prefilledForm.paymentMethod || '');
       if (prefilledForm.note) setNote(prefilledForm.note);
     } else if (!isAddModalOpen) {
       resetForm();
@@ -94,16 +93,31 @@ export const AddExpenseModal: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!title.trim()) {
-      setErrorMsg('Please enter a description title');
+      triggerError('Please enter a description title');
       return;
     }
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
-      setErrorMsg('Please enter a valid positive amount');
+      triggerError('Please enter a valid positive amount');
       return;
     }
 
-    const currentCat = categories.find((c) => c.id === selectedCategoryId) || categories[0] || { id: 1, title: 'General' };
+    if (!selectedCategoryId) {
+      triggerError('Please select a category');
+      return;
+    }
+
+    const isValidPaymentMethod = PAYMENT_METHODS.some((p) => p.value === paymentMethod);
+    if (!paymentMethod || !isValidPaymentMethod) {
+      triggerError('Please select a payment method');
+      return;
+    }
+
+    const currentCat = categories.find((c) => c.id === selectedCategoryId);
+    if (!currentCat) {
+      triggerError('Please select a valid category');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -132,10 +146,11 @@ export const AddExpenseModal: React.FC = () => {
       if (success) {
         resetForm();
       } else {
-        setErrorMsg(editingTransaction ? 'Failed to update transaction. Please try again.' : 'Failed to save transaction. Please try again.');
+        triggerError(editingTransaction ? 'Failed to update transaction. Please try again.' : 'Failed to save transaction. Please try again.');
         resetForm();
       }
     } catch (err) {
+      triggerError('An error occurred while saving the transaction');
       resetForm();
     } finally {
       setIsSubmitting(false);
@@ -170,7 +185,7 @@ export const AddExpenseModal: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.formScroll}>
+          <ScrollView ref={scrollViewRef} showsVerticalScrollIndicator={false} contentContainerStyle={styles.formScroll}>
             {errorMsg ? <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text> : null}
 
             {prefilledForm ? (
@@ -311,7 +326,10 @@ export const AddExpenseModal: React.FC = () => {
                     { backgroundColor: colors.background, borderColor: colors.surfaceLight },
                     selectedCategoryId === cat.id && [styles.pillActive, { backgroundColor: colors.primary, borderColor: colors.primary }],
                   ]}
-                  onPress={() => setSelectedCategoryId(cat.id)}
+                  onPress={() => {
+                    setSelectedCategoryId(cat.id);
+                    setErrorMsg('');
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text
@@ -339,7 +357,10 @@ export const AddExpenseModal: React.FC = () => {
                     { backgroundColor: colors.background, borderColor: colors.surfaceLight },
                     paymentMethod === item.value && [styles.pillActive, { backgroundColor: colors.primary, borderColor: colors.primary }],
                   ]}
-                  onPress={() => setPaymentMethod(item.value)}
+                  onPress={() => {
+                    setPaymentMethod(item.value);
+                    setErrorMsg('');
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text

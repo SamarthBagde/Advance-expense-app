@@ -8,6 +8,7 @@ import {
   UserProfile,
   CreateExpensePayload,
   CategoryItem,
+  IExpenseFilterDTO,
 } from '../types';
 import { getAuthToken, useAuth } from './AuthContext';
 import { useGlobalError } from './ErrorContext';
@@ -24,6 +25,7 @@ const getAuthHeaders = (): Record<string, string> => {
 
 interface ExpenseContextType {
   transactions: Transaction[];
+  allTransactions: Transaction[];
   userProfile: UserProfile;
   totalBalance: number;
   totalIncome: number;
@@ -51,7 +53,7 @@ interface ExpenseContextType {
   openExpenseDetailModal: (transaction: Transaction) => void;
   closeExpenseDetailModal: () => void;
   fetchCategories: () => Promise<void>;
-  fetchExpenses: () => Promise<void>;
+  fetchExpenses: (filters?: IExpenseFilterDTO) => Promise<void>;
   addTransaction: (payload: CreateExpensePayload) => Promise<boolean>;
   updateTransaction: (id: string, payload: Partial<CreateExpensePayload>) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
@@ -69,9 +71,10 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { showError } = useGlobalError();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState<boolean>(false);
 
@@ -86,6 +89,8 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Fetch Categories from Backend API
   const fetchCategories = async () => {
+    const token = getAuthToken();
+    if (!token) return;
     try {
       const response = await axios.get(`${API_URL}/category`, {
         headers: getAuthHeaders(),
@@ -95,16 +100,34 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
         setCategories(resData.data);
       }
     } catch (error: any) {
+      if (error.response?.status === 401) {
+        await logout();
+        return;
+      }
       console.error('Failed to fetch categories from backend:', error);
     }
   };
 
-  // Fetch Expenses from Backend API
-  const fetchExpenses = async () => {
-    if (!isAuthenticated) return;
+  // Fetch Expenses from Backend API with optional filters & sorting
+  const fetchExpenses = async (filters?: IExpenseFilterDTO) => {
+    const token = getAuthToken();
+    if (!isAuthenticated || !token) return;
+
     setIsLoadingExpenses(true);
     try {
+      // Clean query parameters (pass only defined filters)
+      const cleanParams: Record<string, any> = {};
+      if (filters) {
+        if (filters.categoryId !== undefined) cleanParams.categoryId = filters.categoryId;
+        if (filters.startDate) cleanParams.startDate = filters.startDate;
+        if (filters.endDate) cleanParams.endDate = filters.endDate;
+        if (filters.expenseDate) cleanParams.expenseDate = filters.expenseDate;
+        if (filters.sortBy) cleanParams.sortBy = filters.sortBy;
+        if (filters.sortOrder) cleanParams.sortOrder = filters.sortOrder;
+      }
+
       const response = await axios.get(`${API_URL}/expense`, {
+        params: cleanParams,
         headers: getAuthHeaders(),
       });
       const resData = response.data;
@@ -129,8 +152,17 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
           };
         });
         setTransactions(mappedTx);
+        // If no filter query parameters were sent, update overall allTransactions as well
+        if (Object.keys(cleanParams).length === 0) {
+          setAllTransactions(mappedTx);
+        }
       }
     } catch (error: any) {
+      if (error.response?.status === 401) {
+        console.warn('Auth token expired or invalid (401). Logging out...');
+        await logout();
+        return;
+      }
       const serverMsg = error.response?.data?.message || error.message || 'Failed to load expenses from server';
       console.error('Failed to fetch expenses from backend:', serverMsg);
       showError(serverMsg);
@@ -146,6 +178,7 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
       fetchExpenses();
     } else {
       setTransactions([]);
+      setAllTransactions([]);
       setCategories([]);
     }
   }, [isAuthenticated]);
@@ -210,7 +243,7 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
 
       // Match extracted category name to user categories
-      let matchedCatId = categories[0]?.id || 17;
+      let matchedCatId: number | undefined = undefined;
       if (extracted.category && categories.length > 0) {
         const foundCat = categories.find(
           (c) => c.title.toLowerCase() === String(extracted.category).toLowerCase()
@@ -220,12 +253,31 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
       }
 
+      // Normalize payment method from OCR text to standard enum values
+      const rawPm = extracted.paymentMethod ? String(extracted.paymentMethod).toUpperCase() : '';
+      let normalizedPm = '';
+      if (['CASH', 'UPI', 'DEBIT_CARD', 'CREDIT_CARD', 'BANK_TRANSFER', 'WALLET', 'OTHER'].includes(rawPm)) {
+        normalizedPm = rawPm;
+      } else if (rawPm.includes('UPI') || rawPm.includes('GPAY') || rawPm.includes('GOOGLE PAY') || rawPm.includes('PHONEPE') || rawPm.includes('PAYTM') || rawPm.includes('BHIM')) {
+        normalizedPm = 'UPI';
+      } else if (rawPm.includes('CARD') || rawPm.includes('DEBIT')) {
+        normalizedPm = 'DEBIT_CARD';
+      } else if (rawPm.includes('CREDIT')) {
+        normalizedPm = 'CREDIT_CARD';
+      } else if (rawPm.includes('BANK') || rawPm.includes('TRANSFER') || rawPm.includes('NEFT') || rawPm.includes('IMPS') || rawPm.includes('RTGS')) {
+        normalizedPm = 'BANK_TRANSFER';
+      } else if (rawPm.includes('WALLET')) {
+        normalizedPm = 'WALLET';
+      } else if (rawPm.includes('CASH')) {
+        normalizedPm = 'CASH';
+      }
+
       const prefilledData: Partial<Transaction> = {
         title: extracted.merchant || extracted.title || 'Scanned Bill',
         amount: typeof extracted.amount === 'number' ? extracted.amount : (parseFloat(extracted.amount) || 0),
         type: extracted.type === 'CREDITED' ? 'CREDITED' : 'DEBITED',
         categoryId: matchedCatId,
-        paymentMethod: extracted.paymentMethod || 'CASH',
+        paymentMethod: normalizedPm,
         note: extracted.note || (extracted.merchant ? `Bill photo from ${extracted.merchant}` : 'Auto-extracted from bill photo'),
       };
 
@@ -376,6 +428,7 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
     <ExpenseContext.Provider
       value={{
         transactions,
+        allTransactions,
         userProfile,
         totalBalance,
         totalIncome,

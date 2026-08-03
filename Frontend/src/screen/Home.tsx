@@ -7,8 +7,8 @@ import { ArrowUpRightIcon, ArrowDownLeftIcon } from '../components/Icons';
 
 export default function Home() {
   const { colors } = useTheme();
-  const { userProfile, totalBalance, totalIncome, totalExpense, transactions, openAddOptionsModal } = useExpense();
-  const recentTransactions = transactions.slice(0, 5);
+  const { userProfile, totalBalance, totalIncome, totalExpense, allTransactions, openAddOptionsModal } = useExpense();
+  const recentTransactions = allTransactions.slice(0, 10);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
