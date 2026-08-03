@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getEnvVariable } from "../utils/env.js";
 import { AppError } from "../utils/appError.js";
+import type { IExtractedExpense } from "../types/expense.type.js";
 
 const genAI = new GoogleGenerativeAI(
     getEnvVariable('GEMINI_API_KEY')
@@ -10,7 +11,7 @@ const model = genAI.getGenerativeModel({
     model: "gemini-3.5-flash-lite"
 });
 
-export const getStructuredExpenseFromText = async (text: string) => {
+export const getStructuredExpenseFromText = async (text: string): Promise<IExtractedExpense> => {
     const prompt = `
         You are an expense extraction AI.
 

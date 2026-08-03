@@ -5,6 +5,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import type { NextFunction, Request, Response } from "express";
 import { getEnvVariable } from "../utils/env.js";
 import { getUserById } from "../services/user.service.js";
+import type { IUserResponseDTO } from "../types/user.type.js";
 
 type TokenPayload = JwtPayload & { id: number };
 
@@ -25,10 +26,10 @@ export const protect = asyncHandler(
       );
     }
 
-    const jwtSecret = getEnvVariable("JWT_SECRET_KEY");
-    const decoded = jwt.verify(token, jwtSecret) as TokenPayload;
+    const jwtSecret: string = getEnvVariable("JWT_SECRET_KEY");
+    const decoded: TokenPayload = jwt.verify(token, jwtSecret) as TokenPayload;
 
-    const userData = await getUserById(Number(decoded.id));
+    const userData: IUserResponseDTO | null = await getUserById(Number(decoded.id));
 
     if (!userData) {
       return next(

@@ -15,21 +15,14 @@ export const registerUser = asyncHandler(async (req: Request, res: Response, nex
         return next(new AppError("Please fill all the required fields", 400));
     }
 
-    const createdUser = await userService.createUser({
+    const createdUser: IUserResponseDTO = await userService.createUser({
         username,
         email,
         password,
         phone
     });
 
-    const userResponse: IUserResponseDTO = {
-        id: createdUser.id!,
-        username: createdUser.username,
-        email: createdUser.email,
-        phone: createdUser.phone,
-    };
-
-    sendToken(userResponse, 201, res);
+    sendToken(createdUser, 201, res);
 });
 
 export const login = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
