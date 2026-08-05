@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as ExpenseController from "../controllers/expense.controller.js";
 import { protect } from "../controllers/auth.controller.js";
-import upload from "../config/multer.js";
+import { uploadImage, uploadAudio } from "../config/multer.js";
 
 const expenseRouter = Router();
 
@@ -11,7 +11,7 @@ expenseRouter.get("/:id", protect, ExpenseController.getExpenseById);
 expenseRouter.patch("/update/:id", protect, ExpenseController.updateExpense);
 expenseRouter.delete("/delete/:id", protect, ExpenseController.deleteExpense);
 
-expenseRouter.post("/extract", protect, upload.single("image"), ExpenseController.extracExpense);
-expenseRouter.post("/text", protect, ExpenseController.extracExpenseFromText);
+expenseRouter.post("/extract", protect, uploadImage.single("image"), ExpenseController.extracExpense);
+expenseRouter.post("/extract-audio", protect, uploadAudio.single("audio"), ExpenseController.extractExpenseFromAudioHandler);
 
 export default expenseRouter;

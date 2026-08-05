@@ -1,10 +1,12 @@
 import { AppError } from "../utils/appError.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import type { Response, Request, NextFunction } from "express";
+import fs from "fs";
 import * as expenseService from "../services/expense.service.js";
 import { sendResponse } from "../utils/sendResponse.js";
 import { extracText } from "../services/ocr.service.js";
 import { getStructuredExpenseFromText } from "../services/gemini.service.js";
+import { transcribeAudioWithVosk } from "../services/vosk.service.js";
 import type Expense from "../models/expense.model.js";
 import type { IExpenseFilterDTO, IExtractedExpense, SortByField, SortOrder } from "../types/expense.type.js";
 
@@ -134,14 +136,18 @@ export const extracExpense = asyncHandler(async (req: Request, res: Response, ne
     const imagePath = file.path;
     const text: string = await extracText(imagePath);
 
+    if (file.path && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+    }
+
     if (!text) {
         return next(new AppError("Failed to extract text from image", 500));
     }
 
-    const expenseDraft: IExtractedExpense = await getStructuredExpenseFromText(text)
+    const expenseDraft: IExtractedExpense = await getStructuredExpenseFromText(text);
 
     return sendResponse<IExtractedExpense>(res, 200, "Expense extracted successfully", expenseDraft);
-})
+});
 
 export const extracExpenseFromText = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 
@@ -159,3 +165,30 @@ export const extracExpenseFromText = asyncHandler(async (req: Request, res: Resp
 
     return sendResponse<IExtractedExpense>(res, 200, "Expense extracted successfully", expenseDraft);
 })
+
+export const extractExpenseFromAudioHandler = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const file = req.file;
+
+    if (!file) {
+        return next(new AppError("Please provide audio file", 400));
+    }
+
+    const transcript = await transcribeAudioWithVosk(file.path);
+
+    if (file.path && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+    }
+
+    if (!transcript) {
+        return next(new AppError("Could not transcribe audio speech", 400));
+    }
+
+    const expense = await getStructuredExpenseFromText(transcript);
+
+    return sendResponse<IExtractedExpense>(
+        res,
+        200,
+        "Audio expense extracted successfully",
+        expense
+    );
+});
