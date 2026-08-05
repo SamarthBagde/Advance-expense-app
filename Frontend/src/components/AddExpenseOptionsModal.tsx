@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native';
-import { DocumentIcon, CameraIcon, MicIcon } from './Icons';
+import { DocumentIcon, CameraIcon } from './Icons';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -18,10 +18,9 @@ export const AddExpenseOptionsModal: React.FC = () => {
     closeAddOptionsModal,
     openAddModal,
     openScanModal,
-    openVoiceModal,
   } = useExpense();
 
-  const handleSelectOption = (optionType: 'manual' | 'camera' | 'voice') => {
+  const handleSelectOption = (optionType: 'manual' | 'camera') => {
     closeAddOptionsModal();
 
     switch (optionType) {
@@ -30,9 +29,6 @@ export const AddExpenseOptionsModal: React.FC = () => {
         break;
       case 'camera':
         openScanModal();
-        break;
-      case 'voice':
-        openVoiceModal();
         break;
     }
   };
@@ -102,24 +98,6 @@ export const AddExpenseOptionsModal: React.FC = () => {
               <View style={styles.cardTextContent}>
                 <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Scan Bill Photo</Text>
                 <Text style={[styles.cardDesc, { color: colors.textMuted }]}>Camera receipt scanner</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* 3. Voice Command */}
-            <TouchableOpacity
-              style={[
-                styles.optionCard,
-                { backgroundColor: colors.background, borderColor: colors.surfaceLight },
-              ]}
-              activeOpacity={0.8}
-              onPress={() => handleSelectOption('voice')}
-            >
-              <View style={[styles.iconBox, { backgroundColor: 'rgba(168, 85, 247, 0.15)' }]}>
-                <MicIcon color="#A855F7" size={22} />
-              </View>
-              <View style={styles.cardTextContent}>
-                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Voice Entry</Text>
-                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>Speak & auto-fill details</Text>
               </View>
             </TouchableOpacity>
           </View>

@@ -115,7 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await saveAuthSession(receivedToken, receivedUser);
             return true;
         } catch (error: any) {
-            console.error('Login error:', error);
+            console.log('Login error:', error);
             setError(error.response?.data?.message || error.message || 'Network request failed. Is your backend server running?');
             return false;
         }

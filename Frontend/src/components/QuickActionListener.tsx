@@ -4,7 +4,7 @@ import QuickActions from 'react-native-quick-actions';
 import { useExpense } from '../context/ExpenseContext';
 
 export const QuickActionListener: React.FC = () => {
-  const { openAddModal, openScanModal, openVoiceModal } = useExpense();
+  const { openAddModal, openScanModal } = useExpense();
 
   useEffect(() => {
     // Define Quick Launch Shortcut Items for Home Screen Icon Long-Press
@@ -24,13 +24,6 @@ export const QuickActionListener: React.FC = () => {
           icon: Platform.OS === 'ios' ? 'CapturePhoto' : 'scan_icon',
           userInfo: { url: 'scan' } as any,
         },
-        {
-          type: 'voice_entry',
-          title: 'Voice Entry',
-          subtitle: 'Speak transaction details',
-          icon: Platform.OS === 'ios' ? 'Audio' : 'mic_icon',
-          userInfo: { url: 'voice' } as any,
-        },
       ]);
     } catch (err) {
       console.warn('Failed to set quick action items:', err);
@@ -45,9 +38,6 @@ export const QuickActionListener: React.FC = () => {
           break;
         case 'scan_receipt':
           openScanModal();
-          break;
-        case 'voice_entry':
-          openVoiceModal();
           break;
       }
     };
@@ -70,7 +60,7 @@ export const QuickActionListener: React.FC = () => {
     return () => {
       subscription.remove();
     };
-  }, [openAddModal, openScanModal, openVoiceModal]);
+  }, [openAddModal, openScanModal]);
 
   return null;
 };

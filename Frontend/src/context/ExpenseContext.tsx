@@ -42,9 +42,6 @@ interface ExpenseContextType {
   isScanModalOpen: boolean;
   openScanModal: () => void;
   closeScanModal: () => void;
-  isVoiceModalOpen: boolean;
-  openVoiceModal: () => void;
-  closeVoiceModal: () => void;
   prefilledForm: Partial<Transaction> | null;
   setPrefilledForm: (data: Partial<Transaction> | null) => void;
   editingTransaction: Transaction | null;
@@ -82,7 +79,6 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isAddOptionsOpen, setIsAddOptionsOpen] = useState<boolean>(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState<boolean>(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
   const [prefilledForm, setPrefilledForm] = useState<Partial<Transaction> | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedExpenseDetail, setSelectedExpenseDetail] = useState<Transaction | null>(null);
@@ -212,9 +208,6 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const openScanModal = () => setIsScanModalOpen(true);
   const closeScanModal = () => setIsScanModalOpen(false);
-
-  const openVoiceModal = () => setIsVoiceModalOpen(true);
-  const closeVoiceModal = () => setIsVoiceModalOpen(false);
 
   // Extract Expense details from bill photo via backend extract API
   const extractExpenseFromBillImage = async (file: { uri: string; type?: string; name?: string }): Promise<Partial<Transaction> | null> => {
@@ -445,9 +438,6 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
         isScanModalOpen,
         openScanModal,
         closeScanModal,
-        isVoiceModalOpen,
-        openVoiceModal,
-        closeVoiceModal,
         prefilledForm,
         setPrefilledForm,
         editingTransaction,
