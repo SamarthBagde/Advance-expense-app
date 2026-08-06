@@ -174,6 +174,7 @@ export const extractExpenseFromAudioHandler = asyncHandler(async (req: Request, 
     }
 
     const transcript = await transcribeAudioWithVosk(file.path);
+    console.log(`Transcript: ${transcript}`)
 
     if (file.path && fs.existsSync(file.path)) {
         fs.unlinkSync(file.path);
