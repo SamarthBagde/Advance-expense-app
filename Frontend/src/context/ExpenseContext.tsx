@@ -42,6 +42,9 @@ interface ExpenseContextType {
   isScanModalOpen: boolean;
   openScanModal: () => void;
   closeScanModal: () => void;
+  isVoiceModalOpen: boolean;
+  openVoiceModal: () => void;
+  closeVoiceModal: () => void;
   prefilledForm: Partial<Transaction> | null;
   setPrefilledForm: (data: Partial<Transaction> | null) => void;
   editingTransaction: Transaction | null;
@@ -55,6 +58,7 @@ interface ExpenseContextType {
   updateTransaction: (id: string, payload: Partial<CreateExpensePayload>) => Promise<boolean>;
   deleteTransaction: (id: string) => Promise<boolean>;
   extractExpenseFromBillImage: (file: { uri: string; type?: string; name?: string }) => Promise<Partial<Transaction> | null>;
+  extractExpenseFromAudio: (file: { uri: string; type?: string; name?: string }) => Promise<Partial<Transaction> | null>;
 }
 
 const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
@@ -79,6 +83,7 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isAddOptionsOpen, setIsAddOptionsOpen] = useState<boolean>(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState<boolean>(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
   const [prefilledForm, setPrefilledForm] = useState<Partial<Transaction> | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedExpenseDetail, setSelectedExpenseDetail] = useState<Transaction | null>(null);
@@ -209,6 +214,9 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
   const openScanModal = () => setIsScanModalOpen(true);
   const closeScanModal = () => setIsScanModalOpen(false);
 
+  const openVoiceModal = () => setIsVoiceModalOpen(true);
+  const closeVoiceModal = () => setIsVoiceModalOpen(false);
+
   // Extract Expense details from bill photo via backend extract API
   const extractExpenseFromBillImage = async (file: { uri: string; type?: string; name?: string }): Promise<Partial<Transaction> | null> => {
     try {
@@ -279,6 +287,81 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
     } catch (error: any) {
       const serverMsg = error.response?.data?.message || error.message || 'Failed to process bill photo';
       console.error('Bill photo extraction error:', serverMsg);
+      showError(serverMsg);
+      return null;
+    }
+  };
+
+  // Extract Expense details from audio recording via backend extract-audio API
+  const extractExpenseFromAudio = async (file: { uri: string; type?: string; name?: string }): Promise<Partial<Transaction> | null> => {
+    try {
+      const formData = new FormData();
+      const cleanUri = Platform.OS === 'android' ? file.uri : file.uri.replace('file://', '');
+
+      formData.append('audio', {
+        uri: cleanUri,
+        type: file.type || 'audio/mp3',
+        name: file.name || `voice_${Date.now()}.mp3`,
+      } as any);
+
+      const headers = {
+        ...getAuthHeaders(),
+        'Content-Type': 'multipart/form-data',
+      };
+
+      const response = await axios.post(`${API_URL}/expense/extract-audio`, formData, { headers });
+
+      const resData = response.data;
+      const extracted = resData?.data;
+
+      if (!extracted) {
+        throw new Error('No structured expense data returned from audio');
+      }
+
+      // Match extracted category name to user categories
+      let matchedCatId: number | undefined = undefined;
+      if (extracted.category && categories.length > 0) {
+        const foundCat = categories.find(
+          (c) => c.title.toLowerCase() === String(extracted.category).toLowerCase()
+        );
+        if (foundCat) {
+          matchedCatId = foundCat.id;
+        }
+      }
+
+      // Normalize payment method
+      const rawPm = extracted.paymentMethod ? String(extracted.paymentMethod).toUpperCase() : '';
+      let normalizedPm = '';
+      if (['CASH', 'UPI', 'DEBIT_CARD', 'CREDIT_CARD', 'BANK_TRANSFER', 'WALLET', 'OTHER'].includes(rawPm)) {
+        normalizedPm = rawPm;
+      } else if (rawPm.includes('UPI') || rawPm.includes('GPAY') || rawPm.includes('GOOGLE PAY') || rawPm.includes('PHONEPE') || rawPm.includes('PAYTM') || rawPm.includes('BHIM')) {
+        normalizedPm = 'UPI';
+      } else if (rawPm.includes('CARD') || rawPm.includes('DEBIT')) {
+        normalizedPm = 'DEBIT_CARD';
+      } else if (rawPm.includes('CREDIT')) {
+        normalizedPm = 'CREDIT_CARD';
+      } else if (rawPm.includes('BANK') || rawPm.includes('TRANSFER') || rawPm.includes('NEFT') || rawPm.includes('IMPS') || rawPm.includes('RTGS')) {
+        normalizedPm = 'BANK_TRANSFER';
+      } else if (rawPm.includes('WALLET')) {
+        normalizedPm = 'WALLET';
+      } else if (rawPm.includes('CASH')) {
+        normalizedPm = 'CASH';
+      }
+
+      const prefilledData: Partial<Transaction> = {
+        title: extracted.merchant || extracted.title || 'Voice Expense',
+        amount: typeof extracted.amount === 'number' ? extracted.amount : (parseFloat(extracted.amount) || 0),
+        type: extracted.type === 'CREDITED' ? 'CREDITED' : 'DEBITED',
+        categoryId: matchedCatId,
+        paymentMethod: normalizedPm,
+        note: extracted.note || (extracted.merchant ? `Voice entry for ${extracted.merchant}` : 'Auto-extracted from voice recording'),
+      };
+
+      setPrefilledForm(prefilledData);
+      return prefilledData;
+    } catch (error: any) {
+      const serverMsg = error.response?.data?.message || error.message || 'Failed to process voice recording';
+      console.error('Audio extraction error:', serverMsg);
       showError(serverMsg);
       return null;
     }
@@ -438,6 +521,9 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
         isScanModalOpen,
         openScanModal,
         closeScanModal,
+        isVoiceModalOpen,
+        openVoiceModal,
+        closeVoiceModal,
         prefilledForm,
         setPrefilledForm,
         editingTransaction,
@@ -451,6 +537,7 @@ export const ExpenseProvider: React.FC<{ children: ReactNode }> = ({ children })
         updateTransaction,
         deleteTransaction,
         extractExpenseFromBillImage,
+        extractExpenseFromAudio,
       }}
     >
       {children}

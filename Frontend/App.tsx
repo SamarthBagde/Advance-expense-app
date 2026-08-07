@@ -12,6 +12,7 @@ import AuthNavigator from './src/navigation/AuthNavigation';
 import { AddExpenseModal } from './src/components/AddExpenseModal';
 import { AddExpenseOptionsModal } from './src/components/AddExpenseOptionsModal';
 import { ScanReceiptModal } from './src/components/ScanReceiptModal';
+import { VoiceRecordModal } from './src/components/VoiceRecordModal';
 import { ExpenseDetailModal } from './src/components/ExpenseDetailModal';
 import { SharedIntentListener } from './src/components/SharedIntentListener';
 
@@ -40,6 +41,7 @@ function AppContent() {
             <AddExpenseModal />
             <AddExpenseOptionsModal />
             <ScanReceiptModal />
+            <VoiceRecordModal />
             <ExpenseDetailModal />
             <SharedIntentListener />
           </ExpenseProvider>

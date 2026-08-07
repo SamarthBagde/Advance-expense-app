@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Pressable,
 } from 'react-native';
-import { DocumentIcon, CameraIcon } from './Icons';
+import { DocumentIcon, CameraIcon, MicIcon } from './Icons';
 import { useExpense } from '../context/ExpenseContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -18,9 +18,10 @@ export const AddExpenseOptionsModal: React.FC = () => {
     closeAddOptionsModal,
     openAddModal,
     openScanModal,
+    openVoiceModal,
   } = useExpense();
 
-  const handleSelectOption = (optionType: 'manual' | 'camera') => {
+  const handleSelectOption = (optionType: 'manual' | 'camera' | 'voice') => {
     closeAddOptionsModal();
 
     switch (optionType) {
@@ -29,6 +30,9 @@ export const AddExpenseOptionsModal: React.FC = () => {
         break;
       case 'camera':
         openScanModal();
+        break;
+      case 'voice':
+        openVoiceModal();
         break;
     }
   };
@@ -65,7 +69,8 @@ export const AddExpenseOptionsModal: React.FC = () => {
 
           {/* List of Input Method Cards */}
           <View style={styles.gridContainer}>
-            {/* 1. Manual Form Entry */}
+
+            {/* Manual Form Entry */}
             <TouchableOpacity
               style={[
                 styles.optionCard,
@@ -83,7 +88,7 @@ export const AddExpenseOptionsModal: React.FC = () => {
               </View>
             </TouchableOpacity>
 
-            {/* 2. Scan Bill Photo */}
+            {/* Scan Bill Photo */}
             <TouchableOpacity
               style={[
                 styles.optionCard,
@@ -100,6 +105,25 @@ export const AddExpenseOptionsModal: React.FC = () => {
                 <Text style={[styles.cardDesc, { color: colors.textMuted }]}>Camera receipt scanner</Text>
               </View>
             </TouchableOpacity>
+
+            {/* Voice Expense Entry */}
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                { backgroundColor: colors.background, borderColor: colors.surfaceLight },
+              ]}
+              activeOpacity={0.8}
+              onPress={() => handleSelectOption('voice')}
+            >
+              <View style={[styles.iconBox, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+                <MicIcon color="#EF4444" size={22} />
+              </View>
+              <View style={styles.cardTextContent}>
+                <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Voice Expense Entry</Text>
+                <Text style={[styles.cardDesc, { color: colors.textMuted }]}>Speak expense description & auto-extract</Text>
+              </View>
+            </TouchableOpacity>
+
           </View>
 
 
