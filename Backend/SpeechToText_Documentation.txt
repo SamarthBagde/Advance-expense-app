@@ -1,0 +1,187 @@
+================================================================================
+          COMPLETE TECHNICAL DOCUMENTATION: SPEECH-TO-TEXT & EXPENSE EXTRACTION
+================================================================================
+
+1. SYSTEM ARCHITECTURE & WORKFLOW
+--------------------------------------------------------------------------------
+The backend handles voice-to-expense extraction using a 4-stage pipeline:
+
+  Client (App / Postman) 
+    --> POST /api/expense/extract-audio (multipart/form-data)
+    --> Multer Middleware (Saves temporary audio file to src/uploads/)
+    --> Vosk Service (Auto-downloads model if missing -> FFmpeg converts to 16kHz PCM WAV -> Vosk Recognizer transcribes speech to text)
+    --> Temp File Cleanup (Unlinks uploaded audio and converted WAV files)
+    --> Gemini AI (Parses text into structured JSON: merchant, amount, type, date, category)
+    --> Response (Returns structured JSON to client)
+
+
+2. TECH STACK & DEPENDENCIES
+--------------------------------------------------------------------------------
+- vosk (^0.3.39): Pure offline C++/Node.js speech recognition engine. Uses English model vosk-model-small-en-us-0.15 (~40MB).
+- ffmpeg-static (^5.3.0): Bundled static FFmpeg binary.
+- fluent-ffmpeg (^2.1.3): Transcodes audio (.m4a, .mp3, .ogg, .webm, .wav, etc.) into 16kHz 16-bit Mono PCM WAV required by Vosk.
+- @google/generative-ai (^0.24.1): Gemini AI model for extracting structured JSON from text.
+- multer (^2.2.0): Node.js middleware for handling multipart file uploads.
+
+
+3. CODE IMPLEMENTATION DETAILS
+--------------------------------------------------------------------------------
+
+A. Multer Configuration (src/config/multer.ts)
+-----------------------------------------------
+Allows audio mime types and extensions up to 25MB:
+
+const audioFileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    "audio/wav", "audio/wave", "audio/x-wav", "audio/mp3",
+    "audio/mpeg", "audio/m4a", "audio/x-m4a", "audio/aac",
+    "audio/ogg", "audio/webm", "audio/3gp", "audio/3gpp",
+    "audio/mp4", "audio/flac"
+  ];
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExtensions = [".wav", ".mp3", ".m4a", ".aac", ".ogg", ".webm", ".3gp", ".mp4", ".flac"];
+
+  if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only audio files are allowed"), false);
+  }
+};
+
+export const uploadAudio = multer({
+  storage,
+  fileFilter: audioFileFilter,
+  limits: { fileSize: 25 * 1024 * 1024 }
+});
+
+
+B. Vosk Service (src/services/vosk.service.ts)
+------------------------------------------------
+Automatically downloads vosk-model-small-en-us-0.15 on first run if missing, converts input audio to 16kHz PCM WAV, and transcribes speech:
+
+export const transcribeAudioWithVosk = async (inputFilePath: string): Promise<string> => {
+  const model = await ensureVoskModel();
+  const sampleRate = 16000;
+  const outputWavPath = `${inputFilePath}-converted.wav`;
+
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputFilePath)
+      .outputOptions([
+        "-ac 1",            // Mono channel
+        "-ar 16000",        // 16kHz sample rate
+        "-f wav",           // WAV container
+        "-acodec pcm_s16le" // 16-bit PCM
+      ])
+      .on("error", (err) => {
+        if (fs.existsSync(outputWavPath)) fs.unlinkSync(outputWavPath);
+        reject(new AppError(`Audio conversion failed: ${err.message}`, 500));
+      })
+      .on("end", () => {
+        try {
+          const rec = new vosk.Recognizer({ model: model, sampleRate: sampleRate });
+          const stream = fs.createReadStream(outputWavPath, { highWaterMark: 4096 });
+
+          stream.on("data", (chunk: Buffer) => {
+            rec.acceptWaveform(chunk);
+          });
+
+          stream.on("end", () => {
+            const finalResult = rec.finalResult();
+            rec.free();
+            if (fs.existsSync(outputWavPath)) fs.unlinkSync(outputWavPath);
+            resolve((finalResult.text || "").trim());
+          });
+
+          stream.on("error", (err) => {
+            rec.free();
+            if (fs.existsSync(outputWavPath)) fs.unlinkSync(outputWavPath);
+            reject(new AppError(`Error reading converted audio: ${err.message}`, 500));
+          });
+        } catch (error: any) {
+          if (fs.existsSync(outputWavPath)) fs.unlinkSync(outputWavPath);
+          reject(new AppError(`Vosk transcription error: ${error?.message || "Unknown error"}`, 500));
+        }
+      })
+      .save(outputWavPath);
+  });
+};
+
+
+C. Express Controller (src/controllers/expense.controller.ts)
+--------------------------------------------------------------
+Coordinates Vosk transcription, temporary file unlinking, Gemini JSON parsing, and response:
+
+export const extractExpenseFromAudioHandler = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const file = req.file;
+
+    if (!file) {
+        return next(new AppError("Please provide audio file", 400));
+    }
+
+    // 1. Transcribe speech using Vosk
+    const transcript = await transcribeAudioWithVosk(file.path);
+
+    // 2. Delete temporary uploaded audio file
+    if (file.path && fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+    }
+
+    if (!transcript) {
+        return next(new AppError("Could not transcribe audio speech", 400));
+    }
+
+    // 3. Extract structured expense JSON using Gemini AI
+    const expense = await getStructuredExpenseFromText(transcript);
+
+    // 4. Send response
+    return sendResponse<IExtractedExpense>(
+        res,
+        200,
+        "Audio expense extracted successfully",
+        expense
+    );
+});
+
+
+D. Route Registration (src/routes/expense.route.ts)
+-----------------------------------------------------
+expenseRouter.post("/extract-audio", protect, uploadAudio.single("audio"), ExpenseController.extractExpenseFromAudioHandler);
+
+
+4. POSTMAN TESTING GUIDE
+--------------------------------------------------------------------------------
+- HTTP Method: POST
+- URL: http://localhost:3000/api/expense/extract-audio
+- Headers: 
+    Authorization: Bearer <YOUR_JWT_TOKEN>
+- Body: Select form-data
+    - Key: audio (Change type dropdown from Text to File)
+    - Value: Select your audio file (.m4a, .mp3, .wav, .aac, .ogg)
+
+Sample JSON Response:
+{
+  "status": "success",
+  "message": "Audio expense extracted successfully",
+  "data": {
+    "merchant": "Walmart",
+    "amount": 20,
+    "type": "DEBITED",
+    "date": "2026-08-05",
+    "paymentMethod": null,
+    "transactionId": null,
+    "category": "Groceries"
+  }
+}
+
+
+5. GIT BEST PRACTICES
+--------------------------------------------------------------------------------
+The models/ directory and src/uploads/ are ignored in .gitignore so heavy binary files (~40MB model weights) are never committed to your git history:
+
+.gitignore entry:
+models/
+src/uploads/
+*.wav
+*.traineddata
+
+When the app is deployed or cloned on a new machine, Vosk Service automatically downloads the model on the very first run!
